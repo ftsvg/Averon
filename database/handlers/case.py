@@ -12,6 +12,9 @@ def generate_case_id(length: int = 10) -> str:
 
 
 class CaseManager:
+    def __init__(self, guild_id: int) -> None:
+        self._guild_id = guild_id
+
     @staticmethod
     def _case_id_exists(case_id: str, *, cursor: Cursor) -> bool:
         cursor.execute(
@@ -37,10 +40,9 @@ class CaseManager:
                 return new_case_id
 
 
-    @staticmethod
     @ensure_cursor
     def create_case(
-        guild_id: int,
+        self,
         user_id: int,
         moderator_id: int,
         case_type: str,
@@ -64,7 +66,7 @@ class CaseManager:
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (
-                guild_id,
+                self._guild_id,
                 case_id,
                 user_id,
                 moderator_id,
@@ -78,25 +80,28 @@ class CaseManager:
         return case_id
 
 
-    @staticmethod
     @ensure_cursor
-    def delete_case(case_id: str, *, cursor: Cursor = None) -> None:
+    def delete_case(self, case_id: str, *, cursor: Cursor = None) -> None:
         cursor.execute(
-            "DELETE FROM cases WHERE case_id = %s", (case_id,)
+            """
+            DELETE FROM cases
+            WHERE guild_id = %s AND case_id = %s
+            """,
+            (self._guild_id, case_id)
         )
 
 
-    @staticmethod
     @ensure_cursor
-    def get_case(case_id: str, *, cursor: Cursor = None) -> Optional[Case]:
+    def get_case(self, case_id: str, *, cursor: Cursor = None) -> Optional[Case]:
         cursor.execute(
             """
-            SELECT 
-                id, guild_id, case_id, user_id, moderator_id, type, created_at, duration, expires_at
+            SELECT
+                id, guild_id, case_id, user_id, moderator_id,
+                type, created_at, duration, expires_at
             FROM cases
-            HERE case_id = %s
+            WHERE guild_id = %s AND case_id = %s
             """,
-            (case_id,)
+            (self._guild_id, case_id)
         )
 
         result = cursor.fetchone()
