@@ -10,6 +10,7 @@ class Case:
     user_id: int
     moderator_id: int
     type: str
+    reason: str
     created_at: int
     duration: Optional[int]
     expires_at: Optional[int]
