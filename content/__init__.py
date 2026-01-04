@@ -1,6 +1,7 @@
-from .errors import SETTINGS_ERRORS
+from .errors import SETTINGS_ERRORS, COMMAND_ERRORS
 
 
 __all__ = [ 
-    'SETTINGS_ERRORS'
+    'SETTINGS_ERRORS',
+    'COMMAND_ERRORS'
 ]

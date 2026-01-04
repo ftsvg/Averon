@@ -1,17 +1,18 @@
 import os
-import discord
 from discord.ext import commands
+from discord import app_commands, Intents, Interaction
 
 from logger import logger
+from core import InteractionErrorHandler
 
 
-intents = discord.Intents.all()
+intents = Intents.all()
 intents.message_content = True
 
 
 class Client(commands.AutoShardedBot):
     def __init__(
-        self, *, intents: discord.Intents = intents
+        self, *, intents: Intents = intents
     ):
         super().__init__(
             intents=intents,
@@ -29,6 +30,16 @@ class Client(commands.AutoShardedBot):
 
                     except commands.errors.ExtensionNotFound:
                         logger.warning(f"Failed to load {cog[:-3]}")
+        
+        self.tree.on_error = self.on_app_command_error
+
+
+    async def on_app_command_error(
+        self,
+        interaction: Interaction,
+        error: app_commands.AppCommandError
+    ):
+        await InteractionErrorHandler.handle(interaction, error)
 
 
     async def on_ready(self):

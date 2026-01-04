@@ -4,3 +4,11 @@ SETTINGS_ERRORS = {
         "message": "TOKEN is not set in the environment variables."
     }
 }
+
+
+COMMAND_ERRORS = {
+    "interaction_error": {
+        "title": "An error occurred",
+        "message": "Something went wrong while executing this command."
+    }    
+}
