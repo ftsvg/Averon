@@ -19,4 +19,4 @@ class Settings:
             raise RuntimeError(SETTINGS_ERRORS['missing_token']['message'])
         
         if not all([cls.DBUSER, cls.DBPASS, cls.DBNAME, cls.DBENDPOINT]):
-            raise RuntimeError("Database credentials are missing.")
+            raise RuntimeError(SETTINGS_ERRORS["missing_database_credentials"]["message"])

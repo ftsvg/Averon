@@ -26,8 +26,8 @@ async def check_permissions(
 
     if missing:
         embed = error_embed(
-            COMMAND_ERRORS["interaction_error"]["title"],
-            COMMAND_ERRORS["interaction_error"]["message"]
+            COMMAND_ERRORS["permissions_error"]["title"],
+            COMMAND_ERRORS["permissions_error"]["message"]
         )
         if interaction.response.is_done():
             await interaction.edit_original_response(embed=embed)
