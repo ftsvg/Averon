@@ -18,6 +18,21 @@ COMMAND_ERRORS = {
     "permissions_error": {
         "title": "An error occurred",
         "message": "You do not have permission to use this command."
-    }
-  
+    },
+    "punish_yourself_error": {
+        "title": "An error occurred",
+        "message": "You cannot peform this action on yourself."        
+    },
+    "punish_bot_error": {
+        "title": "An error occurred",
+        "message": "You cannot peform this action on bots."        
+    },
+    "permissions_role_error": {
+        "title": "An error occurred",
+        "message": "You cannot perform this action on this user."
+    },
+    "permissions_bot_error": {
+        "title": "An error occurred",
+        "message": "I do not have permission to perform this action."
+    },
 }
