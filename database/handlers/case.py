@@ -62,7 +62,7 @@ class CaseManager:
             cursor=cursor
         )
 
-        final_reason = reason if reason else "Not given"
+        final_reason = reason if reason else "Not given."
 
         cursor.execute(
             """

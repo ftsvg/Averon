@@ -51,5 +51,10 @@ COMMANDS = {
         "name": "purge",
         "description": "Delete a number of messages from the current channel",
         "amount": "Number of messages to delete (1-100)"
-    }
+    },
+    "case_view": {
+        "name": "view",
+        "description": "View a moderation case",
+        "case_id": "The ID of the case to view"
+    }    
 }

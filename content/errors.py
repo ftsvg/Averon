@@ -54,5 +54,9 @@ COMMAND_ERRORS = {
     "already_timed_out": {
         "title": "An error occurred",
         "message": "That user is already timed out."
+    },
+    "case_not_found": {
+        "title": "Case Not Found",
+        "message": "No case was found with that ID."
     }
 }
