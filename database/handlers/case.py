@@ -6,8 +6,8 @@ from typing import Optional
 from database import ensure_cursor, Cursor, Case
 
 
-def generate_case_id(length: int = 10) -> str:
-    chars = string.ascii_uppercase + string.digits
+def generate_case_id(length: int = 6) -> str:
+    chars = string.ascii_lowercase + string.digits
     return ''.join(secrets.choice(chars) for _ in range(length))
 
 
