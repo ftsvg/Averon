@@ -5,7 +5,7 @@ from content import COMMANDS, COMMAND_ERRORS
 from core import check_permissions, LOGO
 from core.utils import format_duration
 from ui import log_embed, error, normal
-from ui.views import CaseView
+from ui.views import CaseView, ConfirmCaseClearModal
 from database.handlers import CaseManager
 
 
@@ -124,18 +124,12 @@ class Case(commands.Cog):
         interaction: Interaction,
         member: Member
     ):
-        await interaction.response.defer()
-
         if not await check_permissions(interaction, "admin"):
             return
         
-        manager = CaseManager(interaction.guild.id)
-        deleted = manager.clear_user_cases(member.id)
-
-        await interaction.edit_original_response(
-            embed=normal(
-                author_name="Cases cleared", author_icon_url=LOGO,
-                description=f"Successfully deleted `{deleted}` cases for `{member.name}`."
+        await interaction.response.send_modal(
+            ConfirmCaseClearModal(
+                member.id
             )
         )
 

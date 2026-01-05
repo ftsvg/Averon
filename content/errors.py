@@ -58,5 +58,9 @@ COMMAND_ERRORS = {
     "case_not_found": {
         "title": "An error occurred",
         "message": "No case was found with that ID."
+    },
+    "confirm_error": {
+        "title": "An error occurred",
+        "message": "Please type `confirm` to confirm this action."
     }
 }

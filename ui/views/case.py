@@ -1,9 +1,10 @@
 from discord import Interaction, ButtonStyle, Message, TextStyle
 from discord.ui import View, button, Button, Modal, TextInput
 
-from ui import normal, log_embed
+from ui import normal, log_embed, error
 from core import LOGO
 from core.utils import format_duration
+from content import COMMAND_ERRORS
 from database.handlers import CaseManager
 
 
@@ -193,5 +194,45 @@ class EditReasonModal(Modal, title="Edit case reason"):
             ephemeral=True
         )
 
+
+class ConfirmCaseClearModal(Modal, title="Confirm"):
+    confirm = TextInput(
+        label="Type 'confirm' to confirm",
+        placeholder="confirm",
+        style=TextStyle.short,
+        required=True,
+        min_length=7,
+        max_length=7
+    )
+
+    def __init__(
+        self, 
+        member_id: int, 
+    ):
+        super().__init__()
+        self._member_id = member_id
+
+    async def on_submit(self, interaction: Interaction):
+        if not str(self.confirm).lower() == 'confirm':
+            return await interaction.response.send_message(
+                embed=error(
+                    title=COMMAND_ERRORS['confirm_error']['title'],
+                    description=COMMAND_ERRORS['confirm_error']['message']
+                )
+            )
+        
+        manager = CaseManager(interaction.guild.id)
+        deleted = manager.clear_user_cases(self._member_id)
+
+        await interaction.response.send_message(
+            embed=normal(
+                author_name="Cases cleared", author_icon_url=LOGO,
+                description=f"Successfully deleted `{deleted}` cases."
+            )
+        )
+
+
+
+        
 
         

@@ -1,6 +1,7 @@
-from .case import CaseView
+from .case import CaseView, ConfirmCaseClearModal
 
 
 __all__ = [
-    'CaseView'
+    'CaseView',
+    'ConfirmCaseClearModal'
 ]
