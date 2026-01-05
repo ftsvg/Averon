@@ -11,6 +11,18 @@ COMMANDS = {
         "member": "The user to kick",
         "reason": "Reason for the kick"
     },
+    "ban": {
+        "name": "ban",
+        "description": "Ban a user",
+        "member": "The user to ban",
+        "reason": "Reason for the ban"
+    },
+    "unban": {
+        "name": "unban",
+        "description": "Unban a user",
+        "user_id": "The id of the user you want to unban",
+        "reason": "Reason for the unban"
+    },
     "logs": {
         "name": "logs",
         "description": "Set the moderation log channel",

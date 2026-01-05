@@ -35,4 +35,12 @@ COMMAND_ERRORS = {
         "title": "An error occurred",
         "message": "I do not have permission to perform this action."
     },
+    "invalid_user_id_error": {
+        "title": "An error occurred",
+        "message": "Invalid user ID."
+    },    
+    "user_not_banned_error": {
+        "title": "An error occurred",
+        "message": "This user is not banned or the ID is invalid."
+    },  
 }
