@@ -1,5 +1,5 @@
 from discord.ext import commands
-from discord import app_commands, Interaction, Member
+from discord import app_commands, Interaction, Member, Forbidden, HTTPException
 from datetime import datetime, timedelta, timezone
 
 from core import check_permissions, check_action_allowed, send_log, LOGO
@@ -53,13 +53,31 @@ class Timeout(commands.Cog):
         if not await check_action_allowed(interaction, member, "timeout"):
             return
 
-        delta = TIMEOUT_DURATIONS[duration.value]
+        if member.is_timed_out():
+            await interaction.edit_original_response(
+                embed=error(
+                    title=COMMAND_ERRORS["already_timed_out"]["title"],
+                    description=COMMAND_ERRORS["already_timed_out"]["message"]
+                )
+            )
+            return
+
+        delta = TIMEOUT_DURATIONS.get(duration.value)
+        if not delta:
+            await interaction.edit_original_response(
+                embed=error(
+                    title=COMMAND_ERRORS["interaction_error"]["title"],
+                    description=COMMAND_ERRORS["interaction_error"]["message"]
+                )
+            )
+            return
+
         until = datetime.now(timezone.utc) + delta
         duration_seconds = int(delta.total_seconds())
 
         try:
             await member.timeout(until, reason=reason)
-        except Exception:
+        except (Forbidden, HTTPException):
             await interaction.edit_original_response(
                 embed=error(
                     title=COMMAND_ERRORS["interaction_error"]["title"],
@@ -83,9 +101,8 @@ class Timeout(commands.Cog):
         )
 
         description = f"`{member}` has been timed out for `{duration.name}`"
-
         if reason:
-            description += f"\nReason: **{reason}**"
+            description += f"\n**Reason:** {reason}"
 
         await interaction.edit_original_response(
             embed=normal(
@@ -95,17 +112,18 @@ class Timeout(commands.Cog):
             )
         )
 
-        _log_embed = log_embed(
-            author_name=f"timeout [{case_id}]",
-            fields=[
-                ("user", f"{member} `{member.id}`", True),
-                ("moderator", f"{interaction.user.name} `{interaction.user.id}`", True),
-                ("duration", duration.name, False),
-                ("reason", reason or "Not given.", False)
-            ]
+        await send_log(
+            interaction,
+            log_embed(
+                author_name=f"timeout [{case_id}]",
+                fields=[
+                    ("user", f"{member} `{member.id}`", True),
+                    ("moderator", f"{interaction.user.name} `{interaction.user.id}`", True),
+                    ("duration", duration.name, False),
+                    ("reason", reason or "Not given.", False)
+                ]
+            )
         )
-
-        await send_log(interaction, _log_embed)
 
 
 async def setup(client: commands.Bot) -> None:

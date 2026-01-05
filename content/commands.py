@@ -36,6 +36,12 @@ COMMANDS = {
         "duration": "Timeout duration",
         "reason": "Reason for the timeout"
     },
+    "untimeout": {
+        "name": "untimeout",
+        "description": "Remove an active timeout from a user",
+        "member": "The user to remove the timeout from",
+        "reason": "Reason for removing the timeout"
+    },
     "logs": {
         "name": "logs",
         "description": "Set the moderation log channel",

@@ -43,4 +43,16 @@ COMMAND_ERRORS = {
         "title": "An error occurred",
         "message": "This user is not banned or the ID is invalid."
     },  
+    "not_timed_out_error": {
+        "title": "An error occurred",
+        "message": "This user is not currently timed out."
+    },
+    "invalid_user": {
+        "title": "An error occurred",
+        "message": "That user could not be found. Make sure they are in the server."
+    },
+    "already_timed_out": {
+        "title": "An error occurred",
+        "message": "That user is already timed out."
+    }
 }
