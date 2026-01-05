@@ -46,5 +46,10 @@ COMMANDS = {
         "name": "logs",
         "description": "Set the moderation log channel",
         "channel": "Channel where moderation logs will be sent",
+    },
+    "purge": {
+        "name": "purge",
+        "description": "Delete a number of messages from the current channel",
+        "amount": "Number of messages to delete (1-100)"
     }
 }

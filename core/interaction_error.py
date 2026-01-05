@@ -12,13 +12,13 @@ class InteractionErrorHandler:
 
         if isinstance(error, TransformerError):
             embed = error_embed(
-                COMMAND_ERRORS["invalid_user"]["title"],
-                COMMAND_ERRORS["invalid_user"]["message"]
+                title=COMMAND_ERRORS["invalid_user"]["title"],
+                description=COMMAND_ERRORS["invalid_user"]["message"]
             )
         else:
             embed = error_embed(
-                COMMAND_ERRORS["interaction_error"]["title"],
-                COMMAND_ERRORS["interaction_error"]["message"]
+                title=COMMAND_ERRORS["interaction_error"]["title"],
+                description=COMMAND_ERRORS["interaction_error"]["message"]
             )
 
         if interaction.response.is_done():
