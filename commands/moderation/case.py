@@ -5,6 +5,7 @@ from content import COMMANDS, COMMAND_ERRORS
 from core import check_permissions, LOGO
 from core.utils import format_duration
 from ui import log_embed, error
+from ui.views import CaseView
 from database.handlers import CaseManager
 
 
@@ -60,6 +61,11 @@ class Case(commands.Cog):
             embed=log_embed(
                 author_name=f"{case.type} [{case.case_id}]",
                 fields=fields
+            ),
+            view=CaseView(
+                interaction,
+                interaction.user.id,
+                case.case_id
             )
         )
 

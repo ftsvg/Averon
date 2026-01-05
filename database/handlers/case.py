@@ -116,3 +116,23 @@ class CaseManager:
             return None
 
         return Case(*result)
+    
+
+    @ensure_cursor
+    def update_reason(
+        self,
+        case_id: str,
+        reason: str,
+        *,
+        cursor: Cursor = None
+    ) -> None:
+        final_reason = reason.strip() if reason else "Not given."
+
+        cursor.execute(
+            """
+            UPDATE cases
+            SET reason = %s
+            WHERE guild_id = %s AND case_id = %s
+            """,
+            (final_reason, self._guild_id, case_id)
+        )
