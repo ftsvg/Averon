@@ -23,6 +23,12 @@ COMMANDS = {
         "user_id": "The id of the user you want to unban",
         "reason": "Reason for the unban"
     },
+    "softban": {
+        "name": "softban",
+        "description": "Softban a user (kick + delete messages)",
+        "member": "User to softban",
+        "reason": "Reason for the softban"
+    },
     "logs": {
         "name": "logs",
         "description": "Set the moderation log channel",
