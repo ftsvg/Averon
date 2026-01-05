@@ -6,7 +6,7 @@ COMMANDS = {
         "reason": "Reason for the warning"
     },
     "logs": {
-        "name": "warn",
+        "name": "logs",
         "description": "Set the moderation log channel",
         "channel": "Channel where moderation logs will be sent",
     }
