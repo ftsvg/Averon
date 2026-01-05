@@ -29,6 +29,13 @@ COMMANDS = {
         "member": "User to softban",
         "reason": "Reason for the softban"
     },
+    "timeout": {
+        "name": "timeout",
+        "description": "Timeout a user",
+        "member": "User to timeout",
+        "duration": "Timeout duration",
+        "reason": "Reason for the timeout"
+    },
     "logs": {
         "name": "logs",
         "description": "Set the moderation log channel",
