@@ -27,9 +27,9 @@ def base_embed(
 
 
 def success(
-    title: str,
-    description: str | None = None,
     *,
+    title: str | None = None,
+    description: str | None = None,
     thumbnail: str | None = None,
     footer: str | None = None
 ) -> Embed:
@@ -43,9 +43,9 @@ def success(
 
 
 def error(
-    title: str,
-    description: str | None = None,
     *,
+    title: str | None = None,
+    description: str | None = None,
     thumbnail: str | None = None,
     footer: str | None = None
 ) -> Embed:
@@ -59,9 +59,9 @@ def error(
 
 
 def warning(
-    title: str,
-    description: str | None = None,
     *,
+    title: str | None = None,
+    description: str | None = None,
     thumbnail: str | None = None,
     footer: str | None = None
 ) -> Embed:
@@ -75,9 +75,9 @@ def warning(
 
 
 def normal(
-    title: str,
-    description: str | None = None,
     *,
+    title: str | None = None,
+    description: str | None = None,
     thumbnail: str | None = None,
     footer: str | None = None
 ) -> Embed:
