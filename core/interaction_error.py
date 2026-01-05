@@ -1,3 +1,4 @@
+import traceback
 from discord import app_commands, Interaction, NotFound
 from discord.app_commands import TransformerError
 
@@ -5,10 +6,13 @@ from ui.embeds import error as error_embed
 from content import COMMAND_ERRORS
 
 
+
 class InteractionErrorHandler:
     @staticmethod
     async def handle(interaction: Interaction, error: Exception) -> None:
         error = getattr(error, "original", error)
+
+        traceback.print_exception(error)
 
         if isinstance(error, TransformerError):
             embed = error_embed(
