@@ -1,15 +1,17 @@
 from discord.ext import commands
 from discord import app_commands, Interaction, Member
 
-from core import check_permissions, check_action_allowed
-from ui import success, error
+from core import check_permissions, check_action_allowed, send_log, LOGO
+from ui import normal, log_embed
 from logger import logger
-from content import COMMAND_ERRORS, COMMANDS
+from content import COMMANDS
 from database.handlers import CaseManager
+
 
 class Warn(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
+
 
     @app_commands.command(
         name=COMMANDS["warn"]["name"], 
@@ -43,17 +45,33 @@ class Warn(commands.Cog):
         ) 
 
         logger.info(
-            f"{interaction.user.name} warned {member.name} in {interaction.guild.name} | Case #{case_id}"
+            f"{interaction.user.name} warned {member.name} in {interaction.guild.name} - Case #{case_id}"
         )
 
+        description = f"`{member.name}` has been warned"
+
+        if reason:
+            description += f" for **{reason}**"
+
         await interaction.edit_original_response(
-            embed=success(
-                title=f"Warn #{case_id}",
-                description=(
-                    f"`{member.name}` has been warned by `{interaction.user.name}`.\n"
-                )
+            embed=normal(
+                author_name=f"warn [{case_id}]",
+                author_icon_url=LOGO,
+                description=description
             )
-        ) 
+        )
+
+        _log_embed = log_embed(
+            author_name=f"warn [{case_id}]",
+            fields=[
+                ("user", f"{member.name} `{member.id}`", True),
+                ("moderator", f"{interaction.user.name} `{interaction.user.id}`", True),
+                ("reason", f"{reason if reason else 'Not given.'}", False)
+            ]
+        )
+
+        await send_log(interaction, _log_embed)
+
 
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(Warn(bot))
+    await bot.add_cog(Warn(bot))    

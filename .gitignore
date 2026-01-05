@@ -79,3 +79,5 @@ Thumbs.db
 
 # Misc
 *.sqlite3
+
+schema.sql

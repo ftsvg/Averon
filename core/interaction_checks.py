@@ -9,6 +9,7 @@ PERMISSION_MAP = {
     "kick": ["kick_members"],
     "timeout": ["moderate_members"],
     "warn": ["manage_messages"],
+    "admin": ["administrator"]
 }
 
 

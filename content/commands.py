@@ -4,5 +4,10 @@ COMMANDS = {
         "description": "Warn a user",
         "member": "The user to warn",
         "reason": "Reason for the warning"
+    },
+    "logs": {
+        "name": "warn",
+        "description": "Set the moderation log channel",
+        "channel": "Channel where moderation logs will be sent",
     }
 }

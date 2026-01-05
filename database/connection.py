@@ -2,7 +2,7 @@ import functools
 import pymysql
 from pymysql.cursors import Cursor
 
-from config import Settings
+from config.settings import Settings
 
 
 def db_connect():
