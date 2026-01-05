@@ -47,9 +47,13 @@ class Case(commands.Cog):
                 )
             )
 
+        guild = interaction.guild    
+        user = guild.get_member(case.user_id)
+        moderator = guild.get_member(case.moderator_id) if case.moderator_id else None
+
         fields = [
-            ("user", f"<@{case.user_id}> `{case.user_id}`", True),
-            ("moderator", f"<@{case.moderator_id}> `{case.moderator_id}`" if case.moderator_id else "System", True),
+            ("user", f"{user.name if user else 'Unknown User'} `{case.user_id}`", True),
+            ("moderator", f"{moderator.name if moderator else 'System'} `{case.moderator_id}`" if case.moderator_id else "System", True),
         ]
 
         if case.duration:
