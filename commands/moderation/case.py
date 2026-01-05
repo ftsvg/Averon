@@ -4,7 +4,7 @@ from discord import app_commands, Interaction, TextChannel
 from content import COMMANDS, COMMAND_ERRORS
 from core import check_permissions, LOGO
 from core.utils import format_duration
-from ui import log_embed, error
+from ui import log_embed, error, normal
 from ui.views import CaseView
 from database.handlers import CaseManager
 
@@ -74,5 +74,43 @@ class Case(commands.Cog):
         )
 
 
+    @case.command(
+        name=COMMANDS["case_delete"]["name"],
+        description=COMMANDS["case_delete"]["description"]
+    )
+    @app_commands.describe(
+        case_id=COMMANDS["case_delete"]["case_id"]
+    )
+    async def delete(
+        self,
+        interaction: Interaction,
+        case_id: str
+    ):
+        await interaction.response.defer()
+
+        if not await check_permissions(interaction, "warn"):
+            return
+
+        manager = CaseManager(interaction.guild.id)
+        case = manager.get_case(case_id)
+
+        if not case:
+            return await interaction.edit_original_response(
+                embed=error(
+                    title=COMMAND_ERRORS["case_not_found"]["title"],
+                    description=COMMAND_ERRORS["case_not_found"]["message"]
+                )
+            )
+        
+        manager.delete_case(case_id)
+
+        await interaction.edit_original_response(
+            embed=normal(
+                author_name="Case deleted", author_icon_url=LOGO,
+                description="You have successfully deleted this case."
+            )
+        )
+        
+        
 async def setup(client: commands.Bot) -> None:
     await client.add_cog(Case(client))

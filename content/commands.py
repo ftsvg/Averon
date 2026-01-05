@@ -56,5 +56,10 @@ COMMANDS = {
         "name": "view",
         "description": "View a moderation case",
         "case_id": "The ID of the case to view"
-    }    
+    },
+    "case_delete": {
+        "name": "delete",
+        "description": "Delete a moderation case",
+        "case_id": "The ID of the case to delete"
+    }
 }
