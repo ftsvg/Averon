@@ -1,5 +1,5 @@
 from discord.ext import commands
-from discord import app_commands, Interaction, TextChannel
+from discord import app_commands, Interaction, Member
 
 from content import COMMANDS, COMMAND_ERRORS
 from core import check_permissions, LOGO
@@ -111,6 +111,34 @@ class Case(commands.Cog):
             )
         )
         
+
+    @case.command(
+        name=COMMANDS["case_clear"]["name"],
+        description=COMMANDS["case_clear"]["description"]
+    )
+    @app_commands.describe(
+        member=COMMANDS["case_clear"]["member"]
+    )
+    async def clear(
+        self,
+        interaction: Interaction,
+        member: Member
+    ):
+        await interaction.response.defer()
+
+        if not await check_permissions(interaction, "admin"):
+            return
         
+        manager = CaseManager(interaction.guild.id)
+        deleted = manager.clear_user_cases(member.id)
+
+        await interaction.edit_original_response(
+            embed=normal(
+                author_name="Cases cleared", author_icon_url=LOGO,
+                description=f"Successfully deleted `{deleted}` cases for `{member.name}`."
+            )
+        )
+
+
 async def setup(client: commands.Bot) -> None:
     await client.add_cog(Case(client))

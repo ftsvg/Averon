@@ -136,3 +136,21 @@ class CaseManager:
             """,
             (final_reason, self._guild_id, case_id)
         )
+
+
+    @ensure_cursor
+    def clear_user_cases(
+        self,
+        user_id: int,
+        *,
+        cursor: Cursor = None
+    ) -> int:
+        cursor.execute(
+            """
+            DELETE FROM cases
+            WHERE guild_id = %s AND user_id = %s
+            """,
+            (self._guild_id, user_id)
+        )
+
+        return cursor.rowcount

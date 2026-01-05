@@ -61,5 +61,10 @@ COMMANDS = {
         "name": "delete",
         "description": "Delete a moderation case",
         "case_id": "The ID of the case to delete"
+    },
+    "case_clear": {
+        "name": "clear",
+        "description": "Clear a user's case history",
+        "member": "The user whose case history will be cleared"
     }
 }
