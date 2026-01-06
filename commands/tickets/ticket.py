@@ -2,13 +2,14 @@ from discord.ext import commands
 from discord import app_commands, Interaction, TextChannel, Role, Thread
 
 from core import LOGO, check_ticket_config_permissions
-from ui import normal, error
+from ui import normal, error, log_embed
 from ui.views import TicketsView
 from content import COMMANDS, COMMAND_ERRORS
 from database.handlers import TicketSettingsManager, TicketManager
+from database import Ticket, TicketSettings
 
 
-class Ticket(commands.Cog):
+class Tickets(commands.Cog):
     def __init__(self, client: commands.Bot) -> None:
         self.client = client
 
@@ -177,10 +178,31 @@ class Ticket(commands.Cog):
             )
         )
 
+        ticket_details: Ticket = manager.get_ticket(interaction.channel.id)
+        user = interaction.guild.get_member(ticket_details.user_id)
+
+        settings: TicketSettings = TicketSettingsManager(interaction.guild.id).get_settings()
+        transcript_channel = interaction.guild.get_channel(settings.transcripts_channel_id)
+
+        embed = log_embed(
+            author_name="Transcript",
+            fields=[
+                ("ticket", f"{interaction.channel.name} `{interaction.channel.id}`", False),
+                ("ticket reason", ticket_details.reason, False),
+                ("created at", f"<t:{ticket_details.created_at}:R>", False),
+                ("user", f"{user.name} `{user.id}`", False),
+                ("closed by", f"{interaction.user.name} `{interaction.user.id}`", False)
+            ],
+            thumbnail=user.display_avatar.url if user.display_avatar.url else None
+        )
+
+        if transcript_channel:
+            await transcript_channel.send(embed=embed)        
+
         await channel.delete(
             reason=f"Ticket closed by {interaction.user}"
         )
 
 
 async def setup(client: commands.Bot) -> None:
-    await client.add_cog(Ticket(client))
+    await client.add_cog(Tickets(client))

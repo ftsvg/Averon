@@ -136,12 +136,6 @@ class CloseTicketView(View):
         manager = TicketManager(guild_id)
 
         ticket_details: Ticket = manager.get_ticket(interaction.channel.id)
-        if not ticket_details:
-            await interaction.followup.send(
-                embed=error(description="Ticket not found."),
-                ephemeral=True
-            )
-            return
 
         manager.close_ticket(
             interaction.channel.id,
@@ -172,9 +166,8 @@ class CloseTicketView(View):
                 author_name="Ticket closed",
                 author_icon_url=LOGO,
                 description="This ticket has been closed."
-            ),
-            ephemeral=True
+            )
         )
 
-        await asyncio.sleep(3)
+        await asyncio.sleep(2)
         await interaction.channel.delete()
