@@ -25,10 +25,7 @@ class InteractionErrorHandler:
                 description=COMMAND_ERRORS["interaction_error"]["message"]
             )
 
-        if interaction.response.is_done():
-            try:
-                await interaction.edit_original_response(embed=embed)
-            except NotFound:
-                await interaction.followup.send(embed=embed, ephemeral=True)
-        else:
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+        try:
+            await interaction.followup.send(embed=embed, ephemeral=True)
+        except NotFound:
+            pass
