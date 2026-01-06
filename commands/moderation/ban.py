@@ -27,13 +27,20 @@ class Ban(commands.Cog):
         member: Member,
         reason: str | None = None
     ):
-        await interaction.response.defer()
+        if not interaction.response.is_done():
+            await interaction.response.defer()
 
-        if not await check_permissions(interaction, "ban"):
-            return
-        
-        if not await check_action_allowed(interaction, member, "ban"):
-            return
+        if error_key := (
+            await check_permissions(interaction, "ban")
+            or await check_action_allowed(interaction, member, "ban")
+        ):
+            data = COMMAND_ERRORS[error_key]
+            return await interaction.edit_original_response(
+                embed=error(
+                    title=data["title"],
+                    description=data["message"]
+                )
+            )                
 
         try:
             await member.ban(reason=reason)

@@ -27,13 +27,20 @@ class Kick(commands.Cog):
         member: Member,
         reason: str | None = None
     ):
-        await interaction.response.defer()
+        if not interaction.response.is_done():
+            await interaction.response.defer()
 
-        if not await check_permissions(interaction, "kick"):
-            return
-        
-        if not await check_action_allowed(interaction, member, "kick"):
-            return
+        if error_key := (
+            await check_permissions(interaction, "kick")
+            or await check_action_allowed(interaction, member, "kick")
+        ):
+            data = COMMAND_ERRORS[error_key]
+            return await interaction.edit_original_response(
+                embed=error(
+                    title=data["title"],
+                    description=data["message"]
+                )
+            )  
 
         try: 
             await member.kick(reason=reason)
@@ -90,6 +97,7 @@ class Kick(commands.Cog):
             moderator=interaction.user,
             reason=reason
         )
+
 
 async def setup(client: commands.Bot) -> None:
     await client.add_cog(Kick(client))

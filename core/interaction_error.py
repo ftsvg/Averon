@@ -6,26 +6,26 @@ from ui.embeds import error as error_embed
 from content import COMMAND_ERRORS
 
 
-
 class InteractionErrorHandler:
     @staticmethod
     async def handle(interaction: Interaction, error: Exception) -> None:
         error = getattr(error, "original", error)
-
         traceback.print_exception(error)
 
         if isinstance(error, TransformerError):
-            embed = error_embed(
-                title=COMMAND_ERRORS["invalid_user"]["title"],
-                description=COMMAND_ERRORS["invalid_user"]["message"]
-            )
+            data = COMMAND_ERRORS["invalid_user"]
         else:
-            embed = error_embed(
-                title=COMMAND_ERRORS["interaction_error"]["title"],
-                description=COMMAND_ERRORS["interaction_error"]["message"]
-            )
+            data = COMMAND_ERRORS["interaction_error"]
+
+        embed = error_embed(
+            title=data["title"],
+            description=data["message"]
+        )
 
         try:
-            await interaction.followup.send(embed=embed, ephemeral=True)
+            if interaction.response.is_done():
+                await interaction.followup.send(embed=embed, ephemeral=True)
+            else:
+                await interaction.response.send_message(embed=embed, ephemeral=True)
         except NotFound:
             pass

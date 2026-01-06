@@ -45,13 +45,20 @@ class Timeout(commands.Cog):
         duration: app_commands.Choice[str],
         reason: str | None = None
     ):
-        await interaction.response.defer()
+        if not interaction.response.is_done():
+            await interaction.response.defer()
 
-        if not await check_permissions(interaction, "timeout"):
-            return
-
-        if not await check_action_allowed(interaction, member, "timeout"):
-            return
+        if error_key := (
+            await check_permissions(interaction, "timeout")
+            or await check_action_allowed(interaction, member, "timeout")
+        ):
+            data = COMMAND_ERRORS[error_key]
+            return await interaction.edit_original_response(
+                embed=error(
+                    title=data["title"],
+                    description=data["message"]
+                )
+            )
 
         if member.is_timed_out():
             await interaction.edit_original_response(

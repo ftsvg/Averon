@@ -27,13 +27,20 @@ class Softban(commands.Cog):
         member: Member,
         reason: str | None = None
     ):
-        await interaction.response.defer()
+        if not interaction.response.is_done():
+            await interaction.response.defer()
 
-        if not await check_permissions(interaction, "softban"):
-            return
-        
-        if not await check_action_allowed(interaction, member, "softban"):
-            return
+        if error_key := (
+            await check_permissions(interaction, "softban")
+            or await check_action_allowed(interaction, member, "softban")
+        ):
+            data = COMMAND_ERRORS[error_key]
+            return await interaction.edit_original_response(
+                embed=error(
+                    title=data["title"],
+                    description=data["message"]
+                )
+            )
 
         guild = interaction.guild
 

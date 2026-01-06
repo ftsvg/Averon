@@ -2,9 +2,9 @@ from discord.ext import commands
 from discord import app_commands, Interaction, Member
 
 from core import check_permissions, check_action_allowed, send_log, send_mod_dm, LOGO
-from ui import normal, log_embed
+from ui import normal, log_embed, error
 from logger import logger
-from content import COMMANDS
+from content import COMMANDS, COMMAND_ERRORS
 from database.handlers import CaseManager
 
 
@@ -27,13 +27,20 @@ class Warn(commands.Cog):
         member: Member,
         reason: str | None = None
     ):
-        await interaction.response.defer()
+        if not interaction.response.is_done():
+            await interaction.response.defer()
 
-        if not await check_permissions(interaction, "warn"):
-            return
-        
-        if not await check_action_allowed(interaction, member, "warn"):
-            return          
+        if error_key := (
+            await check_permissions(interaction, "warn")
+            or await check_action_allowed(interaction, member, "warn")
+        ):
+            data = COMMAND_ERRORS[error_key]
+            return await interaction.edit_original_response(
+                embed=error(
+                    title=data["title"],
+                    description=data["message"]
+                )
+            )         
 
         manager = CaseManager(interaction.guild.id)
 

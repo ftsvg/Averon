@@ -31,10 +31,17 @@ class Tickets(commands.Cog):
         interaction: Interaction,
         channel: TextChannel
     ):
-        await interaction.response.defer(ephemeral=True)
+        if not interaction.response.is_done():
+            await interaction.response.defer(ephemeral=True)
 
-        if not await check_ticket_config_permissions(interaction, "config"):
-            return
+        if error_key := await check_ticket_config_permissions(interaction, "config"):
+            data = COMMAND_ERRORS[error_key]
+            return await interaction.edit_original_response(
+                embed=error(
+                    title=data["title"],
+                    description=data["message"]
+                )
+            )
 
         settings = TicketSettingsManager(interaction.guild.id)
         settings.set_ticket_channel(channel.id)
@@ -59,10 +66,17 @@ class Tickets(commands.Cog):
         interaction: Interaction,
         role: Role
     ):
-        await interaction.response.defer(ephemeral=True)
+        if not interaction.response.is_done():
+            await interaction.response.defer(ephemeral=True)
 
-        if not await check_ticket_config_permissions(interaction, "config"):
-            return
+        if error_key := await check_ticket_config_permissions(interaction, "config"):
+            data = COMMAND_ERRORS[error_key]
+            return await interaction.edit_original_response(
+                embed=error(
+                    title=data["title"],
+                    description=data["message"]
+                )
+            )
 
         settings = TicketSettingsManager(interaction.guild.id)
         settings.set_staff_role(role.id)
@@ -87,10 +101,17 @@ class Tickets(commands.Cog):
         interaction: Interaction,
         channel: TextChannel
     ):
-        await interaction.response.defer(ephemeral=True)
+        if not interaction.response.is_done():
+            await interaction.response.defer(ephemeral=True)
 
-        if not await check_ticket_config_permissions(interaction, "config"):
-            return
+        if error_key := await check_ticket_config_permissions(interaction, "config"):
+            data = COMMAND_ERRORS[error_key]
+            return await interaction.edit_original_response(
+                embed=error(
+                    title=data["title"],
+                    description=data["message"]
+                )
+            )
 
         settings = TicketSettingsManager(interaction.guild.id)
         settings.set_transcripts_channel(channel.id)
@@ -115,10 +136,17 @@ class Tickets(commands.Cog):
         interaction: Interaction,
         channel: TextChannel
     ):
-        await interaction.response.defer(ephemeral=True)
+        if not interaction.response.is_done():
+            await interaction.response.defer(ephemeral=True)
 
-        if not await check_ticket_config_permissions(interaction, "config"):
-            return
+        if error_key := await check_ticket_config_permissions(interaction, "config"):
+            data = COMMAND_ERRORS[error_key]
+            return await interaction.edit_original_response(
+                embed=error(
+                    title=data["title"],
+                    description=data["message"]
+                )
+            )
 
         embed = normal(
             author_name="Support Tickets", author_icon_url=LOGO,
@@ -150,10 +178,17 @@ class Tickets(commands.Cog):
         interaction: Interaction,
         channel: Thread
     ):
-        await interaction.response.defer(ephemeral=True)
+        if not interaction.response.is_done():
+            await interaction.response.defer(ephemeral=True)
 
-        if not await check_ticket_config_permissions(interaction, "other"):
-            return
+        if error_key := await check_ticket_config_permissions(interaction, "other"):
+            data = COMMAND_ERRORS[error_key]
+            return await interaction.edit_original_response(
+                embed=error(
+                    title=data["title"],
+                    description=data["message"]
+                )
+            )
         
         manager = TicketManager(interaction.guild.id)
 

@@ -28,7 +28,8 @@ class CaseView(View):
         custom_id="case_delete"
     )
     async def delete(self, interaction: Interaction, button: Button):
-        await interaction.response.defer()
+        if not interaction.response.is_done():
+            await interaction.response.defer()
 
         embed = normal(
             author_name="Confirm",
@@ -103,7 +104,8 @@ class ConfirmView(View):
         interaction: Interaction,
         button: Button
     ):
-        await interaction.response.defer()
+        if not interaction.response.is_done():
+            await interaction.response.defer()
 
         CaseManager(interaction.guild.id).delete_case(self.case_id)
         await self._message.delete()
@@ -129,7 +131,9 @@ class ConfirmView(View):
         interaction: Interaction,
         button: Button
     ):
-        await interaction.response.defer()
+        if not interaction.response.is_done():
+            await interaction.response.defer()
+
         await self._message.delete()
         self._message = None
         self.stop()
@@ -156,7 +160,7 @@ class EditReasonModal(Modal, title="Edit case reason"):
     ):
         super().__init__()
         self._interaction = interaction
-        self._case_id = case_id,
+        self._case_id = case_id
         self._view = view
 
     async def on_submit(self, interaction: Interaction):
