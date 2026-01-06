@@ -13,6 +13,11 @@ PERMISSION_MAP = {
     "purge": ["manage_messages"]
 }
 
+TICKET_PERMISSION_MAP = {
+    "config": ["administrator"],
+    "other": ["manage_messages"],
+}
+
 
 async def check_permissions(
     interaction: Interaction,
@@ -78,10 +83,28 @@ async def check_action_allowed(
     return True
 
 
-async def _send_message(
+async def check_ticket_config_permissions(
     interaction: Interaction,
-    data
-):
+    category: str
+) -> bool:
+    required_perms = TICKET_PERMISSION_MAP.get(category, [])
+    permissions = interaction.user.guild_permissions
+
+    missing = [
+        perm for perm in required_perms
+        if not getattr(permissions, perm, False)
+    ]
+
+    if missing:
+        await _send_message(
+            interaction, COMMAND_ERRORS["permissions_error"]
+        )
+        return False
+
+    return True
+
+
+async def _send_message(interaction: Interaction, data):
     if isinstance(data, Embed):
         embed = data
     else:
@@ -90,7 +113,5 @@ async def _send_message(
             description=data["message"]
         )
 
-    if interaction.response.is_done():
-        await interaction.edit_original_response(embed=embed)
-    else:
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+    await interaction.followup.send(embed=embed, ephemeral=True)
+

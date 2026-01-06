@@ -66,5 +66,14 @@ COMMAND_ERRORS = {
     "no_cases_error": {
         "title": "An error occurred",
         "message": "This user has no cases."
+    },
+    "ticket_config_not_set_error": {
+        "title": "An error occurred",
+        "message": "Please make sure `/ticket channel`, `/ticket role` and `/ticket transcripts` are configured."
+    },
+    "ticket_not_found_error": {
+        "title": "An error occurred",
+        "message": "No ticket was found for this thread."
+
     }
 }

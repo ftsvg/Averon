@@ -71,5 +71,30 @@ COMMANDS = {
         "name": "history",
         "description": "View a user's case history",
         "member": "The user you want to view"
-    }
+    },
+    "ticket_panel": {
+        "name": "panel",
+        "description": "Sends a panel to the specified channel",
+        "channel": "The channel to send the panel to"
+    },
+    "ticket_channel": {
+        "name": "channel",
+        "description": "Setup ticket channel",
+        "channel": "The channel where tickets get created"
+    },
+    "ticket_role": {
+        "name": "role",
+        "description": "Setup ticket staff role",
+        "role": "The staff role for ticket access"
+    },
+    "ticket_transcripts": {
+        "name": "transcripts",
+        "description": "Setup ticket transcripts channel",
+        "channel": "The channel where ticket transcripts will be sent"
+    },
+    "ticket_close": {
+        "name": "close",
+        "description": "Close an active ticket",
+        "channel": "The ticket thread you want to close"
+    },
 }
