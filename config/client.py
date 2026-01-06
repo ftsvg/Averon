@@ -4,6 +4,7 @@ from discord import app_commands, Intents, Interaction
 
 from logger import logger
 from core import InteractionErrorHandler
+from ui.views import TicketsView, CloseTicketView
 
 
 intents = Intents.all()
@@ -31,6 +32,9 @@ class Client(commands.AutoShardedBot):
                     except commands.errors.ExtensionNotFound:
                         logger.warning(f"Failed to load {cog[:-3]}")
         
+        self.add_view(TicketsView(self))
+        self.add_view(CloseTicketView(self))
+
         self.tree.on_error = self.on_app_command_error
 
 
