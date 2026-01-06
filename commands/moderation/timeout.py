@@ -2,7 +2,7 @@ from discord.ext import commands
 from discord import app_commands, Interaction, Member, Forbidden, HTTPException
 from datetime import datetime, timedelta, timezone
 
-from core import check_permissions, check_action_allowed, send_log, LOGO
+from core import check_permissions, check_action_allowed, send_log, send_mod_dm, LOGO
 from ui import normal, error, log_embed
 from logger import logger
 from content import COMMANDS, COMMAND_ERRORS
@@ -77,6 +77,7 @@ class Timeout(commands.Cog):
 
         try:
             await member.timeout(until, reason=reason)
+            
         except (Forbidden, HTTPException):
             await interaction.edit_original_response(
                 embed=error(
@@ -123,6 +124,15 @@ class Timeout(commands.Cog):
                     ("reason", reason or "Not given.", False)
                 ]
             )
+        )
+        await send_mod_dm(
+            member,
+            guild_name=interaction.guild.name,
+            action="timeout",
+            case_id=case_id,
+            moderator=interaction.user,
+            duration=duration.name,
+            reason=reason
         )
 
 

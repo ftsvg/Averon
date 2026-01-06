@@ -1,10 +1,10 @@
 from discord.ext import commands
-from discord import app_commands, Interaction, Member
+from discord import app_commands, Interaction, Member, Forbidden, HTTPException
 
-from core import check_permissions, check_action_allowed, send_log, LOGO
-from ui import normal, log_embed
+from core import check_permissions, check_action_allowed, send_log, send_mod_dm, LOGO
+from ui import normal, log_embed, error
 from logger import logger
-from content import COMMANDS
+from content import COMMANDS, COMMAND_ERRORS
 from database.handlers import CaseManager
 
 
@@ -35,7 +35,16 @@ class Kick(commands.Cog):
         if not await check_action_allowed(interaction, member, "kick"):
             return
 
-        await member.kick(reason=reason)
+        try: 
+            await member.kick(reason=reason)
+
+        except (Forbidden, HTTPException):
+            return await interaction.edit_original_response(
+                embed=error(
+                    title=COMMAND_ERRORS["interaction_error"]["title"],
+                    description=COMMAND_ERRORS["interaction_error"]["message"]
+                )
+            )
 
         manager = CaseManager(interaction.guild.id)
 
@@ -73,7 +82,14 @@ class Kick(commands.Cog):
         )
 
         await send_log(interaction, _log_embed)
-
+        await send_mod_dm(
+            member,
+            guild_name=interaction.guild.name,
+            action="kick",
+            case_id=case_id,
+            moderator=interaction.user,
+            reason=reason
+        )
 
 async def setup(client: commands.Bot) -> None:
     await client.add_cog(Kick(client))

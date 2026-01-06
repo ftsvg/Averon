@@ -1,10 +1,10 @@
 from discord.ext import commands
-from discord import app_commands, Interaction, Member
+from discord import app_commands, Interaction, Member, Forbidden, HTTPException
 
-from core import check_permissions, check_action_allowed, send_log, LOGO
-from ui import normal, log_embed
+from core import check_permissions, check_action_allowed, send_log, send_mod_dm, LOGO
+from ui import normal, log_embed, error
 from logger import logger
-from content import COMMANDS
+from content import COMMANDS, COMMAND_ERRORS
 from database.handlers import CaseManager
 
 
@@ -35,8 +35,18 @@ class Ban(commands.Cog):
         if not await check_action_allowed(interaction, member, "ban"):
             return
 
-        await member.ban(reason=reason)
+        try:
+            await member.ban(reason=reason)
 
+        except (Forbidden, HTTPException):
+            return await interaction.edit_original_response(
+                embed=error(
+                    title=COMMAND_ERRORS["interaction_error"]["title"],
+                    description=COMMAND_ERRORS["interaction_error"]["message"]
+                )
+            )
+
+        user = await interaction.client.fetch_user(member.id)
         manager = CaseManager(interaction.guild.id)
 
         case_id = manager.create_case(
@@ -73,6 +83,14 @@ class Ban(commands.Cog):
         )
 
         await send_log(interaction, _log_embed)
+        await send_mod_dm(
+            user,
+            guild_name=interaction.guild.name,
+            action="ban",
+            case_id=case_id,
+            moderator=interaction.user,
+            reason=reason
+        )
 
 
 async def setup(client: commands.Bot) -> None:

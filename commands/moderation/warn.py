@@ -1,7 +1,7 @@
 from discord.ext import commands
 from discord import app_commands, Interaction, Member
 
-from core import check_permissions, check_action_allowed, send_log, LOGO
+from core import check_permissions, check_action_allowed, send_log, send_mod_dm, LOGO
 from ui import normal, log_embed
 from logger import logger
 from content import COMMANDS
@@ -71,6 +71,14 @@ class Warn(commands.Cog):
         )
 
         await send_log(interaction, _log_embed)
+        await send_mod_dm(
+            member,
+            guild_name=interaction.guild.name,
+            action="warn",
+            case_id=case_id,
+            moderator=interaction.user,
+            reason=reason
+        )
 
 
 async def setup(bot: commands.Bot) -> None:

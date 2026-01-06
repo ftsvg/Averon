@@ -1,7 +1,7 @@
 from discord.ext import commands
 from discord import app_commands, Interaction, Member, Object
 
-from core import check_permissions, check_action_allowed, send_log, LOGO
+from core import check_permissions, check_action_allowed, send_log, send_mod_dm, LOGO
 from ui import normal, error, log_embed
 from logger import logger
 from content import COMMANDS, COMMAND_ERRORS
@@ -49,13 +49,12 @@ class Softban(commands.Cog):
             )
 
         except Exception:
-            await interaction.edit_original_response(
+            return await interaction.edit_original_response(
                 embed=error(
                     title=COMMAND_ERRORS["softban_failed_error"]["title"],
                     description=COMMAND_ERRORS["softban_failed_error"]["message"]
                 )
             )
-            return
 
         manager = CaseManager(guild.id)
 
@@ -93,6 +92,14 @@ class Softban(commands.Cog):
         )
 
         await send_log(interaction, _log_embed)
+        await send_mod_dm(
+            member,
+            guild_name=interaction.guild.name,
+            action="softban",
+            case_id=case_id,
+            moderator=interaction.user,
+            reason=reason
+        )    
 
 
 async def setup(client: commands.Bot) -> None:
