@@ -97,4 +97,19 @@ COMMANDS = {
         "description": "Close an active ticket",
         "channel": "The ticket thread you want to close"
     },
+    "verification_role": {
+        "name": "role",
+        "description": "Setup verification role",
+        "role": "The role given after verification"
+    },
+    "verification_channel": {
+        "name": "logs",
+        "description": "Setup verification logs channel",
+        "channel": "The channel where verification logs will be sent"
+    },
+    "verification_captcha": {
+        "name": "captcha",
+        "description": "Enable or disable verification captcha",
+        "enable": "Whether captcha verification is enabled"
+    },
 }
