@@ -5,7 +5,7 @@ from content import COMMANDS, COMMAND_ERRORS
 from core import check_permissions, LOGO
 from core.utils import format_duration
 from ui import log_embed, error, normal
-from ui.views import CaseView, ConfirmCaseClearModal
+from ui.views import CaseView, ConfirmCaseClearModal, CasePagination
 from database.handlers import CaseManager
 
 
@@ -132,7 +132,63 @@ class Case(commands.Cog):
                 member.id
             )
         )
+        
 
+    @case.command(
+        name=COMMANDS["case_history"]["name"],
+        description=COMMANDS["case_history"]["description"]
+    )
+    @app_commands.describe(
+        member=COMMANDS["case_history"]["member"]
+    )
+    async def history(
+        self,
+        interaction: Interaction,
+        member: Member
+    ):
+        await interaction.response.defer()
+
+        if not await check_permissions(interaction, "warn"):
+            return
+
+        manager = CaseManager(interaction.guild.id)
+        cases = manager.get_user_cases(member.id)
+
+        if not cases:
+            return await interaction.edit_original_response(
+                embed=error(
+                    title=COMMAND_ERRORS['no_cases_error']['title'],
+                    description=COMMAND_ERRORS['no_cases_error']['message']
+                )
+            )
+        
+        header = f"**{member.name}** has a total of `{len(cases)}` cases.\n\n**Cases**\n"
+
+        if len(cases) > 5:
+            view = CasePagination(
+                org_interaction=interaction,
+                org_user=interaction.user.id,
+                member=member,
+                cases=cases,
+                header=header
+            )
+            embed = view.build_embed()
+        else:
+            view = None
+            lines = [
+                f"> {case.type} `[{case.case_id}]` - <t:{case.created_at}:R>"
+                for case in cases
+            ]
+
+            embed = normal(
+                author_name="Case history", author_icon_url=LOGO,
+                description=header + "\n".join(lines)
+            )
+
+        await interaction.edit_original_response(
+            embed=embed,
+            view=view
+        )
 
 async def setup(client: commands.Bot) -> None:
     await client.add_cog(Case(client))

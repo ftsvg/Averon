@@ -66,5 +66,10 @@ COMMANDS = {
         "name": "clear",
         "description": "Clear a user's case history",
         "member": "The user whose case history will be cleared"
+    },
+    "case_history": {
+        "name": "history",
+        "description": "View a user's case history",
+        "member": "The user you want to view"
     }
 }

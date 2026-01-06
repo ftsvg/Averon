@@ -154,3 +154,25 @@ class CaseManager:
         )
 
         return cursor.rowcount
+
+
+    @ensure_cursor
+    def get_user_cases(
+        self,
+        user_id: int,
+        *,
+        cursor: Cursor = None
+    ) -> list[Case]:
+        cursor.execute(
+            """
+            SELECT
+                id, guild_id, case_id, user_id, moderator_id,
+                type, reason, created_at, duration, expires_at
+            FROM cases
+            WHERE guild_id = %s AND user_id = %s
+            ORDER BY created_at DESC
+            """,
+            (self._guild_id, user_id)
+        )
+
+        return [Case(*row) for row in cursor.fetchall()]

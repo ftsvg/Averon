@@ -62,5 +62,9 @@ COMMAND_ERRORS = {
     "confirm_error": {
         "title": "An error occurred",
         "message": "Please type `confirm` to confirm this action."
+    },
+    "no_cases_error": {
+        "title": "An error occurred",
+        "message": "This user has no cases."
     }
 }
