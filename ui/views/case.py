@@ -94,7 +94,7 @@ class ConfirmView(View):
         self._message: Message | None = None
 
     @button(
-        label=f"Confirm",
+        label="Confirm",
         style=ButtonStyle.green,
         custom_id="case_delete_confirm"
     )
@@ -107,17 +107,20 @@ class ConfirmView(View):
 
         CaseManager(interaction.guild.id).delete_case(self.case_id)
         await self._message.delete()
+        self._message = None
+        self.stop()
 
         await self._interaction.edit_original_response(
             embed=normal(
-                author_name="Case deleted", author_icon_url=LOGO,
+                author_name="Case deleted",
+                author_icon_url=LOGO,
                 description="You have successfully deleted this case."
             ),
-            view=None,
+            view=None
         )
 
     @button(
-        label=f"Cancel",
+        label="Cancel",
         style=ButtonStyle.gray,
         custom_id="case_delete_cancel"
     )
@@ -128,12 +131,13 @@ class ConfirmView(View):
     ):
         await interaction.response.defer()
         await self._message.delete()
+        self._message = None
+        self.stop()
 
     async def on_timeout(self):
         if self._message:
             await self._message.delete()
-
-
+            
 
 class EditReasonModal(Modal, title="Edit case reason"):
     reason = TextInput(
