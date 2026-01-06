@@ -34,3 +34,11 @@ class TicketSettings:
     ticket_channel_id: Optional[int]
     staff_role_id: Optional[int]
     transcripts_channel_id: Optional[int]
+
+
+@dataclass(slots=True)
+class VerificationSettings:
+    guild_id: int
+    role_id: Optional[int]
+    logs_channel_id: Optional[int]
+    captcha_enabled: bool
