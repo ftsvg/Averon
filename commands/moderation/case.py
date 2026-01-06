@@ -31,10 +31,17 @@ class Case(commands.Cog):
         interaction: Interaction,
         case_id: str
     ):
-        await interaction.response.defer()
+        if not interaction.response.is_done():
+            await interaction.response.defer()
 
-        if not await check_permissions(interaction, "warn"):
-            return
+        if error_key := await check_permissions(interaction, "warn"):
+            data = COMMAND_ERRORS[error_key]
+            return await interaction.edit_original_response(
+                embed=error(
+                    title=data["title"],
+                    description=data["message"]
+                )
+            )
         
         manager = CaseManager(interaction.guild.id)
         case = manager.get_case(case_id)  
@@ -86,10 +93,17 @@ class Case(commands.Cog):
         interaction: Interaction,
         case_id: str
     ):
-        await interaction.response.defer()
+        if not interaction.response.is_done():
+            await interaction.response.defer()
 
-        if not await check_permissions(interaction, "warn"):
-            return
+        if error_key := await check_permissions(interaction, "warn"):
+            data = COMMAND_ERRORS[error_key]
+            return await interaction.edit_original_response(
+                embed=error(
+                    title=data["title"],
+                    description=data["message"]
+                )
+            )
 
         manager = CaseManager(interaction.guild.id)
         case = manager.get_case(case_id)
@@ -124,8 +138,14 @@ class Case(commands.Cog):
         interaction: Interaction,
         member: Member
     ):
-        if not await check_permissions(interaction, "admin"):
-            return
+        if error_key := await check_permissions(interaction, "warn"):
+            data = COMMAND_ERRORS[error_key]
+            return await interaction.edit_original_response(
+                embed=error(
+                    title=data["title"],
+                    description=data["message"]
+                )
+            )
         
         await interaction.response.send_modal(
             ConfirmCaseClearModal(
@@ -146,10 +166,17 @@ class Case(commands.Cog):
         interaction: Interaction,
         member: Member
     ):
-        await interaction.response.defer()
+        if not interaction.response.is_done():
+            await interaction.response.defer()
 
-        if not await check_permissions(interaction, "warn"):
-            return
+        if error_key := await check_permissions(interaction, "warn"):
+            data = COMMAND_ERRORS[error_key]
+            return await interaction.edit_original_response(
+                embed=error(
+                    title=data["title"],
+                    description=data["message"]
+                )
+            )
 
         manager = CaseManager(interaction.guild.id)
         cases = manager.get_user_cases(member.id)
@@ -189,6 +216,7 @@ class Case(commands.Cog):
             embed=embed,
             view=view
         )
+
 
 async def setup(client: commands.Bot) -> None:
     await client.add_cog(Case(client))

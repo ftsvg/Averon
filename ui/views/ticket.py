@@ -53,7 +53,8 @@ class TicketReasonView(Modal, title="Support ticket"):
         self.client = client
 
     async def on_submit(self, interaction: Interaction):
-        await interaction.response.defer(ephemeral=True)
+        if not interaction.response.is_done():
+            await interaction.response.defer(ephemeral=True)
 
         guild_id = interaction.guild.id
 
@@ -127,10 +128,17 @@ class CloseTicketView(View):
 
     @button(label="Close", emoji="🔒", style=ButtonStyle.red, custom_id="close_ticket")
     async def close(self, interaction: Interaction, button: Button):
-        await interaction.response.defer(ephemeral=True)
+        if not interaction.response.is_done():
+            await interaction.response.defer(ephemeral=True)
 
-        if not await check_ticket_config_permissions(interaction, "other"):
-            return
+        if error_key := await check_ticket_config_permissions(interaction, "other"):
+            data = COMMAND_ERRORS[error_key]
+            return await interaction.edit_original_response(
+                embed=error(
+                    title=data["title"],
+                    description=data["message"]
+                )
+            )
 
         guild_id = interaction.guild.id
         manager = TicketManager(guild_id)

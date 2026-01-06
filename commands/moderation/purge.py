@@ -22,10 +22,17 @@ class Purge(commands.Cog):
         interaction: Interaction,
         amount: app_commands.Range[int, 1, 100]
     ):
-        await interaction.response.defer()
+        if not interaction.response.is_done():
+            await interaction.response.defer()
 
-        if not await check_permissions(interaction, "purge"):
-            return
+        if error_key := await check_permissions(interaction, "purge"):
+            data = COMMAND_ERRORS[error_key]
+            return await interaction.edit_original_response(
+                embed=error(
+                    title=data["title"],
+                    description=data["message"]
+                )
+            )
 
         channel: TextChannel = interaction.channel
 

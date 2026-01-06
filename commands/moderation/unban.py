@@ -27,10 +27,17 @@ class Unban(commands.Cog):
         user_id: str,
         reason: str | None = None
     ):
-        await interaction.response.defer()
+        if not interaction.response.is_done():
+            await interaction.response.defer()
 
-        if not await check_permissions(interaction, "unban"):
-            return
+        if error_key := await check_permissions(interaction, "ban"):
+            data = COMMAND_ERRORS[error_key]
+            return await interaction.edit_original_response(
+                embed=error(
+                    title=data["title"],
+                    description=data["message"]
+                )
+            )
 
         if not user_id.isdigit():
             await interaction.edit_original_response(

@@ -1,7 +1,4 @@
-from discord import Interaction, Member, Embed
-
-from ui import error as error_embed
-from content import COMMAND_ERRORS
+from discord import Interaction, Member
 
 
 PERMISSION_MAP = {
@@ -22,96 +19,55 @@ TICKET_PERMISSION_MAP = {
 async def check_permissions(
     interaction: Interaction,
     category: str
-) -> bool:
+) -> str | None:
     required_perms = PERMISSION_MAP.get(category, [])
     permissions = interaction.user.guild_permissions
 
-    missing = [
-        perm for perm in required_perms
-        if not getattr(permissions, perm, False)
-    ]
+    for perm in required_perms:
+        if not getattr(permissions, perm, False):
+            return "permissions_error"
 
-    if missing:
-        await _send_message(
-            interaction, COMMAND_ERRORS["permissions_error"]
-        )
-        return False
-
-    return True
+    return None
 
 
 async def check_action_allowed(
     interaction: Interaction,
     target: Member,
     action: str
-) -> bool:
-    
-    moderator = interaction.user
+) -> str | None:
     guild = interaction.guild
-    bot = guild.me if guild else None
+    moderator = interaction.user
 
-    if not guild or not bot:
-        return False
+    if not guild or not guild.me:
+        return "interaction_error"
 
     if target.id == moderator.id:
-        await _send_message(
-            interaction, COMMAND_ERRORS["punish_yourself_error"]
-        )
-        return False
+        return "punish_yourself_error"
 
     if target.bot:
-        await _send_message(
-            interaction, COMMAND_ERRORS["punish_bot_error"]
-        )
-        return False
+        return "punish_bot_error"
 
     if target.top_role >= moderator.top_role:
-        await _send_message(
-            interaction, COMMAND_ERRORS["permissions_role_error"]
-        )
-        return False
+        return "permissions_role_error"
 
     required_perms = PERMISSION_MAP.get(action, [])
     if required_perms:
         perm = required_perms[0]
-        if not getattr(bot.guild_permissions, perm, False):
-            await _send_message(
-                interaction, COMMAND_ERRORS["permissions_bot_error"]
-            )
-            return False
+        if not getattr(guild.me.guild_permissions, perm, False):
+            return "permissions_bot_error"
 
-    return True
+    return None
 
 
 async def check_ticket_config_permissions(
     interaction: Interaction,
     category: str
-) -> bool:
+) -> str | None:
     required_perms = TICKET_PERMISSION_MAP.get(category, [])
     permissions = interaction.user.guild_permissions
 
-    missing = [
-        perm for perm in required_perms
-        if not getattr(permissions, perm, False)
-    ]
+    for perm in required_perms:
+        if not getattr(permissions, perm, False):
+            return "permissions_error"
 
-    if missing:
-        await _send_message(
-            interaction, COMMAND_ERRORS["permissions_error"]
-        )
-        return False
-
-    return True
-
-
-async def _send_message(interaction: Interaction, data):
-    if isinstance(data, Embed):
-        embed = data
-    else:
-        embed = error_embed(
-            title=data["title"],
-            description=data["message"]
-        )
-
-    await interaction.followup.send(embed=embed, ephemeral=True)
-
+    return None
