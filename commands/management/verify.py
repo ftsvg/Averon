@@ -3,9 +3,9 @@ from discord import app_commands, Interaction, TextChannel, Role
 
 from core import LOGO, check_permissions
 from ui import normal, error, log_embed
+from ui.views import VerificationView
 from content import COMMANDS, COMMAND_ERRORS
 from database.handlers import VerificationManager
-
 
 
 class Verify(commands.Cog):
@@ -122,6 +122,51 @@ class Verify(commands.Cog):
                 description=f"Captcha verification {'enabled' if enabled else 'disabled'}"
             )
         )
+
+
+    @verification.command(
+        name=COMMANDS['verification_panel']['name'],
+        description=COMMANDS['verification_panel']['description']
+    )
+    @app_commands.describe(
+        channel=COMMANDS['verification_panel']['channel']
+    )
+    async def panel(
+        self, 
+        interaction: Interaction,
+        channel: TextChannel
+    ):
+        if not interaction.response.is_done():
+            await interaction.response.defer(ephemeral=True)
+
+        if error_key := await check_permissions(interaction, "admin"):
+            data = COMMAND_ERRORS[error_key]
+            return await interaction.edit_original_response(
+                embed=error(
+                    title=data["title"],
+                    description=data["message"]
+                )
+            )        
+
+        settings = VerificationManager(interaction.guild.id)
+        settings.set_logs_channel(channel.id)
+
+        embed = normal(
+            author_name="Verification", author_icon_url=LOGO,
+            description="Please click the button below to verify."
+        )
+
+        await channel.send(
+            embed=embed, view=VerificationView(self.client)
+        )
+
+        await interaction.edit_original_response(
+            embed=normal(
+                author_name="Verification panel", author_icon_url=LOGO,
+                description=f"Verification panel sent to {channel.mention}"
+            )
+        )
+
 
 async def setup(client: commands.Bot) -> None:
     await client.add_cog(Verify(client))

@@ -112,4 +112,9 @@ COMMANDS = {
         "description": "Enable or disable verification captcha",
         "enable": "Whether captcha verification is enabled"
     },
+    "verification_panel": {
+        "name": "panel",
+        "description": "Sends a verification panel to the specified channel",
+        "channel": "The channel to send the panel to"
+    },
 }
