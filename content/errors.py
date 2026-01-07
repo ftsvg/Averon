@@ -12,68 +12,91 @@ SETTINGS_ERRORS = {
 
 COMMAND_ERRORS = {
     "interaction_error": {
-        "title": "An error occurred",
+        "title": "Execution error",
         "message": "Something went wrong while executing this command."
-    },  
+    },
     "permissions_error": {
-        "title": "An error occurred",
+        "title": "Permission denied",
         "message": "You do not have permission to use this command."
     },
     "punish_yourself_error": {
-        "title": "An error occurred",
-        "message": "You cannot peform this action on yourself."        
+        "title": "Invalid target",
+        "message": "You cannot peform this action on yourself."
     },
     "punish_bot_error": {
-        "title": "An error occurred",
-        "message": "You cannot peform this action on bots."        
+        "title": "Invalid target",
+        "message": "You cannot peform this action on bots."
     },
     "permissions_role_error": {
-        "title": "An error occurred",
+        "title": "Action not allowed",
         "message": "You cannot perform this action on this user."
     },
     "permissions_bot_error": {
-        "title": "An error occurred",
+        "title": "Missing permissions",
         "message": "I do not have permission to perform this action."
     },
     "invalid_user_id_error": {
-        "title": "An error occurred",
+        "title": "Invalid user ID",
         "message": "Invalid user ID."
-    },    
+    },
     "user_not_banned_error": {
-        "title": "An error occurred",
+        "title": "User not banned",
         "message": "This user is not banned or the ID is invalid."
-    },  
+    },
     "not_timed_out_error": {
-        "title": "An error occurred",
+        "title": "User not timed out",
         "message": "This user is not currently timed out."
     },
     "invalid_user": {
-        "title": "An error occurred",
+        "title": "User not found",
         "message": "That user could not be found. Make sure they are in the server."
     },
     "already_timed_out": {
-        "title": "An error occurred",
+        "title": "Already timed out",
         "message": "That user is already timed out."
     },
     "case_not_found": {
-        "title": "An error occurred",
+        "title": "Case not found",
         "message": "No case was found with that ID."
     },
     "confirm_error": {
-        "title": "An error occurred",
+        "title": "Confirmation required",
         "message": "Please type `confirm` to confirm this action."
     },
     "no_cases_error": {
-        "title": "An error occurred",
+        "title": "No cases found",
         "message": "This user has no cases."
     },
     "ticket_config_not_set_error": {
-        "title": "An error occurred",
+        "title": "Ticket system not configured",
         "message": "Please make sure `/ticket channel`, `/ticket role` and `/ticket transcripts` are configured."
     },
     "ticket_not_found_error": {
-        "title": "An error occurred",
+        "title": "Ticket not found",
         "message": "No ticket was found for this thread."
-
+    },
+    "already_verified_error": {
+        "title": "Already verified",
+        "message": "You are already verified."
+    },
+    "verification_role_error": {
+        "title": "Invalid verification role",
+        "message": "The verification role is invalid. Please contact an administrator to reconfigure it."
+    },
+    "verification_config_not_set_error": {
+        "title": "Verification not configured",
+        "message": "Please make sure `/verification role` and `/verification logs` are configured."
+    },
+    "already_verifying_error": {
+        "title": "Verification in progress",
+        "message": "You are already verifying. Please complete that verification to verify again."
+    },
+    "captcha_expired_error": {
+        "title": "Captcha expired",
+        "message": "You took too long to respond. Please try again."
+    },
+    "invalid_captcha_code_error": {
+        "title": "Incorrect captcha",
+        "message": "The captcha you entered was incorrect. Please try again."
     }
 }
