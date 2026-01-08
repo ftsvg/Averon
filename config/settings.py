@@ -1,7 +1,5 @@
 from os import getenv
-from dotenv import load_dotenv
-
-load_dotenv()
+from dotenv import load_dotenv; load_dotenv()
 
 from content import SETTINGS_ERRORS
 
@@ -16,7 +14,7 @@ class Settings:
     @classmethod
     def validate(cls) -> None:
         if not cls.TOKEN:
-            raise RuntimeError(SETTINGS_ERRORS['missing_token']['message'])
+            raise RuntimeError(SETTINGS_ERRORS['missing_token'])
         
         if not all([cls.DBUSER, cls.DBPASS, cls.DBNAME, cls.DBENDPOINT]):
-            raise RuntimeError(SETTINGS_ERRORS["missing_database_credentials"]["message"])
+            raise RuntimeError(SETTINGS_ERRORS["missing_database_credentials"])

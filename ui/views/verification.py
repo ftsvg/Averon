@@ -1,15 +1,14 @@
 import time
 import os
 import random
-from discord import Client, Interaction, ButtonStyle, Embed, File, Message 
+from discord import Client, Interaction, ButtonStyle, File, Message 
 from captcha.image import ImageCaptcha
 from discord.ui import View, button, Button, Modal, TextInput
 
 from database.handlers import VerificationManager
 from database import VerificationSettings
-from ui import error, normal
-from content import COMMAND_ERRORS
-from core import LOGO, MAIN_COLOR
+from ui import create_embed
+from content import ERRORS, DESCRIPTIONS
 
 
 verifying = set()
@@ -31,10 +30,7 @@ class VerificationView(View):
 
         if not settings or not settings.role_id or not settings.logs_channel_id:
             return await interaction.followup.send(
-                embed=error(
-                    title=COMMAND_ERRORS["verification_config_not_set_error"]["title"],
-                    description=COMMAND_ERRORS["verification_config_not_set_error"]["message"]
-                ),
+                content=ERRORS['verification_config_not_set_error'],
                 ephemeral=True
             )
 
@@ -42,38 +38,26 @@ class VerificationView(View):
 
         if role is None:
             return await interaction.followup.send(
-                embed=error(
-                    title=COMMAND_ERRORS['verification_role_error']['title'],
-                    description=COMMAND_ERRORS['verification_role_error']['message']
-                ),
+                content=ERRORS['verification_role_error'],
                 ephemeral=True
             )
 
         if role in interaction.user.roles:
             return await interaction.followup.send(
-                embed=error(
-                    title=COMMAND_ERRORS['already_verified_error']['title'],
-                    description=COMMAND_ERRORS['already_verified_error']['message']
-                ),
+                content=ERRORS['already_verified_error'],
                 ephemeral=True
             )
 
         if not settings.captcha_enabled:
             await interaction.user.add_roles(role)
             return await interaction.followup.send(
-                embed=normal(
-                    author_name="Verified", author_icon_url=LOGO,
-                    description="You have successfully been verified."
-                ),
+                content=DESCRIPTIONS['verification_success'],
                 ephemeral=True
             )
 
         if interaction.user.id in verifying:
             return await interaction.followup.send(
-                embed=error(
-                    title=COMMAND_ERRORS['already_verifying_error']['title'],
-                    description=COMMAND_ERRORS['already_verifying_error']['message']
-                ),
+                content=ERRORS['already_verifying_error'],
                 ephemeral=True
             )
 
@@ -92,15 +76,14 @@ class VerificationView(View):
 
         file = File(file_path, filename="captcha.jpg")
 
-        embed = Embed(
+        embed = create_embed(
             title="Captcha",
             description=(
                 "You have `1 minute` to answer the captcha correctly.\n"
                 "The captcha will only contain **lowercase** letters."
             ),
-            color=MAIN_COLOR
+            image="attachment://captcha.jpg"
         )
-        embed.set_image(url="attachment://captcha.jpg")
 
         view = CaptchaView(interaction.user.id)
 
@@ -137,12 +120,8 @@ class CaptchaView(View):
         message: Message = session["message"]
 
         await message.edit(
-            embed=error(
-                title=COMMAND_ERRORS['captcha_expired_error']['title'],
-                description=COMMAND_ERRORS['captcha_expired_error']['message']
-            ),
-            view=None,
-            attachments=[]
+            content=ERRORS['captcha_expired_error'],
+            embed=None, view=None, attachments=[]
         )
 
         verifying.discard(self.user_id)
@@ -183,22 +162,14 @@ class CaptchaModal(Modal, title="Captcha Verification"):
         if self.captcha_input.value.lower() != session["answer"]:
             cleanup()
             return await message.edit(
-                embed=error(
-                    title=COMMAND_ERRORS['invalid_captcha_code_error']['title'],
-                    description=COMMAND_ERRORS['invalid_captcha_code_error']['message']
-                ),
-                view=None,
-                attachments=[]
+                content=ERRORS['invalid_captcha_code_error'],
+                embed=None, view=None, attachments=[]
             )
 
         await interaction.user.add_roles(session["role"])
         cleanup()
 
         await message.edit(
-            embed=normal(
-                author_name="Verified", author_icon_url=LOGO,
-                description="You have successfully been verified."
-            ),
-            view=None,
-            attachments=[]
+            content=DESCRIPTIONS['verification_success'],
+            embed=None, view=None, attachments=[]
         )

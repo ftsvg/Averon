@@ -1,10 +1,10 @@
 from discord.ext import commands
 from discord import app_commands, Interaction, Member
 
-from core import check_permissions, check_action_allowed, send_log, send_mod_dm, LOGO
-from ui import normal, log_embed, error
+from core import check_permissions, check_action_allowed, send_log, send_mod_dm
+from ui import create_embed
 from logger import logger
-from content import COMMANDS, COMMAND_ERRORS
+from content import COMMANDS, ERRORS
 from database.handlers import CaseManager
 
 
@@ -34,13 +34,9 @@ class Warn(commands.Cog):
             await check_permissions(interaction, "warn")
             or await check_action_allowed(interaction, member, "warn")
         ):
-            data = COMMAND_ERRORS[error_key]
             return await interaction.edit_original_response(
-                embed=error(
-                    title=data["title"],
-                    description=data["message"]
-                )
-            )         
+                content = ERRORS[error_key]
+            )        
 
         manager = CaseManager(interaction.guild.id)
 
@@ -55,20 +51,16 @@ class Warn(commands.Cog):
             f"{interaction.user.name} warned {member.name} in {interaction.guild.name} - Case #{case_id}"
         )
 
-        description = f"`{member.name}` has been warned"
+        msg = f"`[{case_id}]` **{member.name}** has been warned"
 
         if reason:
-            description += f" for **{reason}**"
+            msg += f" for **{reason}**"
 
         await interaction.edit_original_response(
-            embed=normal(
-                author_name=f"warn [{case_id}]",
-                author_icon_url=LOGO,
-                description=description
-            )
+            content=msg
         )
 
-        _log_embed = log_embed(
+        embed = create_embed(
             author_name=f"warn [{case_id}]",
             fields=[
                 ("user", f"{member.name} `{member.id}`", True),
@@ -77,7 +69,7 @@ class Warn(commands.Cog):
             ]
         )
 
-        await send_log(interaction, _log_embed)
+        await send_log(interaction, embed)
         await send_mod_dm(
             member,
             guild_name=interaction.guild.name,

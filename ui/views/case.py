@@ -1,10 +1,9 @@
 from discord import Interaction, ButtonStyle, Message, TextStyle, Member, Embed
 from discord.ui import View, button, Button, Modal, TextInput
 
-from ui import normal, log_embed, error
-from core import LOGO
+from ui import create_embed
 from core.utils import format_duration
-from content import COMMAND_ERRORS
+from content import ERRORS, DESCRIPTIONS
 from database.handlers import CaseManager
 from database import Case
 
@@ -31,9 +30,8 @@ class CaseView(View):
         if not interaction.response.is_done():
             await interaction.response.defer()
 
-        embed = normal(
+        embed = create_embed(
             author_name="Confirm",
-            author_icon_url=LOGO,
             description="Are you sure you want to delete this case?",
             footer="You have 60 seconds to confirm"
         )
@@ -113,12 +111,8 @@ class ConfirmView(View):
         self.stop()
 
         await self._interaction.edit_original_response(
-            embed=normal(
-                author_name="Case deleted",
-                author_icon_url=LOGO,
-                description="You have successfully deleted this case."
-            ),
-            view=None
+            content=DESCRIPTIONS['case_deleted'],
+            embed=None, view=None
         )
 
     @button(
@@ -173,7 +167,7 @@ class EditReasonModal(Modal, title="Edit case reason"):
 
         guild = self._interaction.guild    
         user = guild.get_member(case.user_id)
-        moderator = guild.get_member(case.moderator_id) if case.moderator_id else None
+        moderator = guild.get_member(case.moderator_id)
 
         fields = [
             ("user", f"{user.name if user else 'Unknown User'} `{case.user_id}`", True),
@@ -186,7 +180,7 @@ class EditReasonModal(Modal, title="Edit case reason"):
         fields.append(("reason", case.reason, False))
 
         await self._interaction.edit_original_response(
-            embed=log_embed(
+            embed=create_embed(
                 author_name=f"{case.type} [{case.case_id}]",
                 fields=fields
             ),
@@ -194,12 +188,7 @@ class EditReasonModal(Modal, title="Edit case reason"):
         )
 
         await interaction.response.send_message(
-            embed=normal(
-                author_name="Reason edited",
-                author_icon_url=LOGO,
-                description="You have successfully edited the reason"
-            ),
-            delete_after=30,
+            content=DESCRIPTIONS['case_reason_edited'],
             ephemeral=True
         )
 
@@ -224,20 +213,14 @@ class ConfirmCaseClearModal(Modal, title="Confirm"):
     async def on_submit(self, interaction: Interaction):
         if not str(self.confirm).lower() == 'confirm':
             return await interaction.response.send_message(
-                embed=error(
-                    title=COMMAND_ERRORS['confirm_error']['title'],
-                    description=COMMAND_ERRORS['confirm_error']['message']
-                )
+                content=ERRORS['confirm_error']
             )
         
         manager = CaseManager(interaction.guild.id)
         deleted = manager.clear_user_cases(self._member_id)
 
         await interaction.response.send_message(
-            embed=normal(
-                author_name="Cases cleared", author_icon_url=LOGO,
-                description=f"Successfully deleted `{deleted}` cases."
-            )
+            content=DESCRIPTIONS['cases_cleared'].format(deleted)
         )
 
 
@@ -275,8 +258,8 @@ class CasePagination(View):
                 f"> {case.type} `[{case.case_id}]` - {created}"
             )
 
-        return normal(
-            author_name="Case history", author_icon_url=LOGO,
+        return create_embed(
+            author_name="Case history",
             description=self.header + "\n".join(lines),
             footer=f"Page {self.page + 1}/{self.max_page + 1}"
         )

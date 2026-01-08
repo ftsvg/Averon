@@ -1,10 +1,10 @@
 from discord.ext import commands
 from discord import app_commands, Interaction, Member, Forbidden, HTTPException
 
-from core import check_permissions, check_action_allowed, send_log, send_mod_dm, LOGO
-from ui import normal, log_embed, error
+from core import check_permissions, check_action_allowed, send_log, send_mod_dm
+from ui import create_embed
 from logger import logger
-from content import COMMANDS, COMMAND_ERRORS
+from content import COMMANDS, ERRORS
 from database.handlers import CaseManager
 
 
@@ -34,12 +34,8 @@ class Ban(commands.Cog):
             await check_permissions(interaction, "ban")
             or await check_action_allowed(interaction, member, "ban")
         ):
-            data = COMMAND_ERRORS[error_key]
             return await interaction.edit_original_response(
-                embed=error(
-                    title=data["title"],
-                    description=data["message"]
-                )
+                content = ERRORS[error_key]
             )                
 
         try:
@@ -47,10 +43,7 @@ class Ban(commands.Cog):
 
         except (Forbidden, HTTPException):
             return await interaction.edit_original_response(
-                embed=error(
-                    title=COMMAND_ERRORS["interaction_error"]["title"],
-                    description=COMMAND_ERRORS["interaction_error"]["message"]
-                )
+                content=ERRORS['interaction_error']
             )
 
         user = await interaction.client.fetch_user(member.id)
@@ -67,29 +60,26 @@ class Ban(commands.Cog):
             f"{interaction.user.name} banned {member.name} from {interaction.guild.name} - Case #{case_id}"
         )
 
-        description = f"`{member.name}` has been banned"
+        msg = f"`[{case_id}]` **{member.name}** has been banned"
 
         if reason:
-            description += f" for **{reason}**"
+            msg += f" for **{reason}**"
 
         await interaction.edit_original_response(
-            embed=normal(
-                author_name=f"ban [{case_id}]",
-                author_icon_url=LOGO,
-                description=description
-            )
+            content=msg
         )
 
-        _log_embed = log_embed(
+        embed = create_embed(
             author_name=f"ban [{case_id}]",
             fields=[
                 ("user", f"{member.name} `{member.id}`", True),
                 ("moderator", f"{interaction.user.name} `{interaction.user.id}`", True),
                 ("reason", f"{reason if reason else 'Not given.'}", False)
-            ]
+            ],
+            timestamp=True
         )
 
-        await send_log(interaction, _log_embed)
+        await send_log(interaction, embed)
         await send_mod_dm(
             user,
             guild_name=interaction.guild.name,

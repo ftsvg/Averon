@@ -1,6 +1,6 @@
 from discord import Member, User, Forbidden, HTTPException
 from logger import logger
-from ui import log_embed
+from ui import create_embed
 
 
 _ACTION_PAST = {
@@ -36,7 +36,7 @@ async def send_mod_dm(
 
     fields.append(("reason", reason or "Not given.", False))
 
-    embed = log_embed(
+    embed = create_embed(
         author_name=f"{action} [{case_id}]",
         fields=fields
     )
@@ -51,6 +51,4 @@ async def send_mod_dm(
         return
 
     except Exception as exc:
-        logger.error(
-            f"Failed to send DM to user {member.id}: {exc}"
-        )
+        logger.error(f"Failed to send DM to user {member.id}: {exc}")

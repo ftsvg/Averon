@@ -1,10 +1,10 @@
 from discord.ext import commands
 from discord import app_commands, Interaction, Member
 
-from content import COMMANDS, COMMAND_ERRORS
-from core import check_permissions, LOGO
+from content import COMMANDS, ERRORS, DESCRIPTIONS
+from core import check_permissions
 from core.utils import format_duration
-from ui import log_embed, error, normal
+from ui import create_embed
 from ui.views import CaseView, ConfirmCaseClearModal, CasePagination
 from database.handlers import CaseManager
 
@@ -35,12 +35,8 @@ class Case(commands.Cog):
             await interaction.response.defer()
 
         if error_key := await check_permissions(interaction, "warn"):
-            data = COMMAND_ERRORS[error_key]
             return await interaction.edit_original_response(
-                embed=error(
-                    title=data["title"],
-                    description=data["message"]
-                )
+                content = ERRORS[error_key]
             )
         
         manager = CaseManager(interaction.guild.id)
@@ -48,19 +44,16 @@ class Case(commands.Cog):
 
         if not case:
             return await interaction.edit_original_response(
-                embed=error(
-                    title=COMMAND_ERRORS["case_not_found"]["title"],
-                    description=COMMAND_ERRORS["case_not_found"]["message"]
-                )
+                content=ERRORS['case_not_found']
             )
 
         guild = interaction.guild    
         user = guild.get_member(case.user_id)
-        moderator = guild.get_member(case.moderator_id) if case.moderator_id else None
+        moderator = guild.get_member(case.moderator_id) if case.moderator_id else 'System'
 
         fields = [
-            ("user", f"{user.name if user else 'Unknown User'} `{case.user_id}`", True),
-            ("moderator", f"{moderator.name if moderator else 'System'} `{case.moderator_id}`" if case.moderator_id else "System", True),
+            ("user", f"{user.name if user else 'Unknown user'} `{case.user_id}`", True),
+            ("moderator", f"{moderator.name} `{case.moderator_id}`" if case.moderator_id else "System", True),
         ]
 
         if case.duration:
@@ -69,7 +62,7 @@ class Case(commands.Cog):
         fields.append(("reason", case.reason, False))
 
         await interaction.edit_original_response(
-            embed=log_embed(
+            embed=create_embed(
                 author_name=f"{case.type} [{case.case_id}]",
                 fields=fields
             ),
@@ -97,12 +90,8 @@ class Case(commands.Cog):
             await interaction.response.defer()
 
         if error_key := await check_permissions(interaction, "warn"):
-            data = COMMAND_ERRORS[error_key]
             return await interaction.edit_original_response(
-                embed=error(
-                    title=data["title"],
-                    description=data["message"]
-                )
+                content = ERRORS[error_key]
             )
 
         manager = CaseManager(interaction.guild.id)
@@ -110,19 +99,13 @@ class Case(commands.Cog):
 
         if not case:
             return await interaction.edit_original_response(
-                embed=error(
-                    title=COMMAND_ERRORS["case_not_found"]["title"],
-                    description=COMMAND_ERRORS["case_not_found"]["message"]
-                )
+                content = ERRORS['case_not_found']
             )
         
         manager.delete_case(case_id)
 
         await interaction.edit_original_response(
-            embed=normal(
-                author_name="Case deleted", author_icon_url=LOGO,
-                description="You have successfully deleted this case."
-            )
+            content=DESCRIPTIONS['case_deleted']
         )
         
 
@@ -139,12 +122,8 @@ class Case(commands.Cog):
         member: Member
     ):
         if error_key := await check_permissions(interaction, "warn"):
-            data = COMMAND_ERRORS[error_key]
             return await interaction.edit_original_response(
-                embed=error(
-                    title=data["title"],
-                    description=data["message"]
-                )
+                content = ERRORS[error_key]
             )
         
         await interaction.response.send_modal(
@@ -170,12 +149,8 @@ class Case(commands.Cog):
             await interaction.response.defer()
 
         if error_key := await check_permissions(interaction, "warn"):
-            data = COMMAND_ERRORS[error_key]
             return await interaction.edit_original_response(
-                embed=error(
-                    title=data["title"],
-                    description=data["message"]
-                )
+                content = ERRORS[error_key]
             )
 
         manager = CaseManager(interaction.guild.id)
@@ -183,10 +158,7 @@ class Case(commands.Cog):
 
         if not cases:
             return await interaction.edit_original_response(
-                embed=error(
-                    title=COMMAND_ERRORS['no_cases_error']['title'],
-                    description=COMMAND_ERRORS['no_cases_error']['message']
-                )
+                content=ERRORS['no_cases_error']
             )
         
         header = f"**{member.name}** has a total of `{len(cases)}` cases.\n\n**Cases**\n"
@@ -207,8 +179,8 @@ class Case(commands.Cog):
                 for case in cases
             ]
 
-            embed = normal(
-                author_name="Case history", author_icon_url=LOGO,
+            embed = create_embed(
+                author_name="Case history",
                 description=header + "\n".join(lines)
             )
 

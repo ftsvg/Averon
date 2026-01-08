@@ -1,10 +1,10 @@
 from discord.ext import commands
 from discord import app_commands, Interaction, Member, Object
 
-from core import check_permissions, check_action_allowed, send_log, send_mod_dm, LOGO
-from ui import normal, error, log_embed
+from core import check_permissions, check_action_allowed, send_log, send_mod_dm
+from ui import create_embed
 from logger import logger
-from content import COMMANDS, COMMAND_ERRORS
+from content import COMMANDS, ERRORS
 from database.handlers import CaseManager
 
 
@@ -34,12 +34,8 @@ class Softban(commands.Cog):
             await check_permissions(interaction, "softban")
             or await check_action_allowed(interaction, member, "softban")
         ):
-            data = COMMAND_ERRORS[error_key]
             return await interaction.edit_original_response(
-                embed=error(
-                    title=data["title"],
-                    description=data["message"]
-                )
+                content = ERRORS[error_key]
             )
 
         guild = interaction.guild
@@ -57,10 +53,7 @@ class Softban(commands.Cog):
 
         except Exception:
             return await interaction.edit_original_response(
-                embed=error(
-                    title=COMMAND_ERRORS["softban_failed_error"]["title"],
-                    description=COMMAND_ERRORS["softban_failed_error"]["message"]
-                )
+                content=ERRORS['interaction_error']
             )
 
         manager = CaseManager(guild.id)
@@ -76,29 +69,26 @@ class Softban(commands.Cog):
             f"{interaction.user.name} softbanned {member} from {guild.name} - Case #{case_id}"
         )
 
-        description = f"`{member}` has been softbanned"
+        msg = f"`[{case_id}]` **{member.name}** has been softbanned"
 
         if reason:
-            description += f" for **{reason}**"
+            msg += f" for **{reason}**"
 
         await interaction.edit_original_response(
-            embed=normal(
-                author_name=f"softban [{case_id}]",
-                author_icon_url=LOGO,
-                description=description
-            )
+            content=msg
         )
 
-        _log_embed = log_embed(
+        embed = create_embed(
             author_name=f"softban [{case_id}]",
             fields=[
                 ("user", f"{member} `{member.id}`", True),
                 ("moderator", f"{interaction.user.name} `{interaction.user.id}`", True),
                 ("reason", reason or "Not given.", False)
-            ]
+            ],
+            timestamp=True
         )
 
-        await send_log(interaction, _log_embed)
+        await send_log(interaction, embed)
         await send_mod_dm(
             member,
             guild_name=interaction.guild.name,
@@ -106,7 +96,7 @@ class Softban(commands.Cog):
             case_id=case_id,
             moderator=interaction.user,
             reason=reason
-        )    
+        )
 
 
 async def setup(client: commands.Bot) -> None:
