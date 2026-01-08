@@ -13,7 +13,7 @@ from database.handlers import TicketManager, TicketSettingsManager
 from database import Ticket, TicketSettings
 from ui import create_embed
 from content import ERRORS, DESCRIPTIONS
-from core import check_ticket_config_permissions
+from core import check_permissions
 
 
 class TicketsView(View):
@@ -121,9 +121,10 @@ class CloseTicketView(View):
         if not interaction.response.is_done():
             await interaction.response.defer(ephemeral=True)
 
-        if error_key := await check_ticket_config_permissions(interaction, "other"):
-            return await interaction.edit_original_response(
-                content = ERRORS[error_key]
+        if error_key := await check_permissions(interaction, "other"):
+            return await interaction.followup.send(
+                content = ERRORS[error_key],
+                ephemeral=True
             )
 
         guild_id = interaction.guild.id
