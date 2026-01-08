@@ -1,7 +1,7 @@
 from discord.ext import commands
 from discord import app_commands, Interaction, TextChannel, Role, Thread
 
-from core import check_ticket_config_permissions
+from core import check_permissions
 from ui import create_embed
 from ui.views import TicketsView
 from content import COMMANDS, ERRORS, DESCRIPTIONS
@@ -34,7 +34,7 @@ class Tickets(commands.Cog):
         if not interaction.response.is_done():
             await interaction.response.defer(ephemeral=True)
 
-        if error_key := await check_ticket_config_permissions(interaction, "config"):
+        if error_key := await check_permissions(interaction, "admin"):
             return await interaction.edit_original_response(
                 content = ERRORS[error_key]
             )
@@ -62,7 +62,7 @@ class Tickets(commands.Cog):
         if not interaction.response.is_done():
             await interaction.response.defer(ephemeral=True)
 
-        if error_key := await check_ticket_config_permissions(interaction, "config"):
+        if error_key := await check_permissions(interaction, "admin"):
             return await interaction.edit_original_response(
                 content = ERRORS[error_key]
             )
@@ -90,7 +90,7 @@ class Tickets(commands.Cog):
         if not interaction.response.is_done():
             await interaction.response.defer(ephemeral=True)
 
-        if error_key := await check_ticket_config_permissions(interaction, "config"):
+        if error_key := await check_permissions(interaction, "admin"):
             return await interaction.edit_original_response(
                 content = ERRORS[error_key]
             )
@@ -115,7 +115,7 @@ class Tickets(commands.Cog):
         if not interaction.response.is_done():
             await interaction.response.defer(ephemeral=True)
 
-        if error_key := await check_ticket_config_permissions(interaction, "config"):
+        if error_key := await check_permissions(interaction, "admin"):
             return await interaction.edit_original_response(
                 content = ERRORS[error_key]
             )
@@ -148,7 +148,7 @@ class Tickets(commands.Cog):
         if not interaction.response.is_done():
             await interaction.response.defer(ephemeral=True)
 
-        if error_key := await check_ticket_config_permissions(interaction, "other"):
+        if error_key := await check_permissions(interaction, "other"):
             return await interaction.edit_original_response(
                 content = ERRORS[error_key]
             )

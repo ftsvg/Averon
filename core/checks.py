@@ -6,13 +6,9 @@ PERMISSION_MAP = {
     "kick": ["kick_members"],
     "timeout": ["moderate_members"],
     "warn": ["manage_messages"],
+    "purge": ["manage_messages"],
     "admin": ["administrator"],
-    "purge": ["manage_messages"]
-}
-
-TICKET_PERMISSION_MAP = {
-    "config": ["administrator"],
-    "other": ["manage_messages"],
+    "other": ["manage_messages"]
 }
 
 
@@ -55,19 +51,5 @@ async def check_action_allowed(
         perm = required_perms[0]
         if not getattr(guild.me.guild_permissions, perm, False):
             return "permissions_bot_error"
-
-    return None
-
-
-async def check_ticket_config_permissions(
-    interaction: Interaction,
-    category: str
-) -> str | None:
-    required_perms = TICKET_PERMISSION_MAP.get(category, [])
-    permissions = interaction.user.guild_permissions
-
-    for perm in required_perms:
-        if not getattr(permissions, perm, False):
-            return "permissions_error"
 
     return None
