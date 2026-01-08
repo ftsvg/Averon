@@ -1,6 +1,7 @@
 import time
 import os
-import random
+import secrets
+import string
 from discord import Client, Interaction, ButtonStyle, File, Message 
 from captcha.image import ImageCaptcha
 from discord.ui import View, button, Button, Modal, TextInput
@@ -11,8 +12,8 @@ from ui import create_embed
 from content import ERRORS, DESCRIPTIONS
 
 
+
 verifying = set()
-letters = list("abcdegkmnopqsuvwxyz")
 captcha_sessions = {}
 
 
@@ -63,7 +64,11 @@ class VerificationView(View):
 
         verifying.add(interaction.user.id)
 
-        captcha_str = ''.join(random.choice(letters) for _ in range(random.randint(6, 8)))
+        captcha_str = ''.join(
+            secrets.choice(string.ascii_lowercase + string.digits)
+            for _ in range(6)
+        )
+
         file_path = f"./assets/captcha/{interaction.user.id}-captcha.jpg"
 
         image = ImageCaptcha(
@@ -80,7 +85,7 @@ class VerificationView(View):
             title="Captcha",
             description=(
                 "You have `1 minute` to answer the captcha correctly.\n"
-                "The captcha will only contain **lowercase** letters."
+                "The captcha will only contain **lowercase** letters and numbers."
             ),
             image="attachment://captcha.jpg"
         )
@@ -95,7 +100,7 @@ class VerificationView(View):
         )
 
         captcha_sessions[interaction.user.id] = {
-            "answer": captcha_str.lower(),
+            "answer": captcha_str,
             "expires": time.time() + 60,
             "role": role,
             "message": message,
@@ -136,9 +141,9 @@ class CaptchaView(View):
 class CaptchaModal(Modal, title="Captcha Verification"):
     captcha_input = TextInput(
         label="Enter the captcha",
-        placeholder="Type the letters shown in the image",
+        placeholder="Type the letters and numbers shown in the image",
         required=True,
-        max_length=8
+        max_length=6
     )
 
     def __init__(self, user_id: int):
@@ -159,7 +164,7 @@ class CaptchaModal(Modal, title="Captcha Verification"):
             except Exception:
                 pass
 
-        if self.captcha_input.value.lower() != session["answer"]:
+        if self.captcha_input.value != session["answer"]:
             cleanup()
             return await message.edit(
                 content=ERRORS['invalid_captcha_code_error'],
