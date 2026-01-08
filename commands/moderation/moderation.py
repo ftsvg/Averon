@@ -1,9 +1,8 @@
 from discord.ext import commands
 from discord import app_commands, Interaction, TextChannel
 
-from content import COMMANDS, COMMAND_ERRORS
-from core import check_permissions, LOGO
-from ui import normal, error
+from content import COMMANDS, ERRORS, DESCRIPTIONS
+from core import check_permissions
 from database.handlers import ModerationManager
 
 
@@ -33,22 +32,15 @@ class Moderation(commands.Cog):
             await interaction.response.defer()
 
         if error_key := await check_permissions(interaction, "admin"):
-            data = COMMAND_ERRORS[error_key]
             return await interaction.edit_original_response(
-                embed=error(
-                    title=data["title"],
-                    description=data["message"]
-                )
-            )
+                content = ERRORS[error_key]
+            ) 
         
         settings = ModerationManager(interaction.guild.id)
         settings.set_log_channel(channel.id)
 
         await interaction.edit_original_response(
-            embed=normal(
-                author_name="Moderation logs", author_icon_url=LOGO,
-                description=f"Logs will now be sent to {channel.mention}"
-            )
+            content=DESCRIPTIONS['moderation_logs'].format(channel.mention)
         )        
 
 

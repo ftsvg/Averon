@@ -1,9 +1,8 @@
 from discord.ext import commands
-from discord import app_commands, Interaction, TextChannel, Forbidden, HTTPException
+from discord import app_commands, Interaction, Forbidden, HTTPException
 
-from core import check_permissions, LOGO   
-from ui import normal, error
-from content import COMMANDS, COMMAND_ERRORS
+from core import check_permissions   
+from content import COMMANDS, ERRORS, DESCRIPTIONS
 
 
 class Purge(commands.Cog):
@@ -26,36 +25,23 @@ class Purge(commands.Cog):
             await interaction.response.defer()
 
         if error_key := await check_permissions(interaction, "purge"):
-            data = COMMAND_ERRORS[error_key]
             return await interaction.edit_original_response(
-                embed=error(
-                    title=data["title"],
-                    description=data["message"]
-                )
+                content = ERRORS[error_key]
             )
-
-        channel: TextChannel = interaction.channel
 
         try:
-            deleted = await channel.purge(
+            deleted = await interaction.channel.purge(
                 limit=amount,
                 before=interaction.created_at,
-                reason=f"Purge by {interaction.user}"
             )
+            
         except (Forbidden, HTTPException):
-            await interaction.edit_original_response(
-                embed=error(
-                    title=COMMAND_ERRORS["interaction_error"]["title"],
-                    description=COMMAND_ERRORS["interaction_error"]["message"]
-                )
+            return await interaction.edit_original_response(
+                content=ERRORS['interaction_error']
             )
-            return
 
         await interaction.edit_original_response(
-            embed=normal(
-                author_name="purge", author_icon_url=LOGO,
-                description=f"Successfully purged `{len(deleted)}` messages in {channel.mention}"
-            )
+            content = DESCRIPTIONS['moderation_purge'].format(len(deleted))
         )
 
 

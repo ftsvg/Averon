@@ -1,7 +1,6 @@
 from discord.ext import commands
 
-from ui import normal
-from core import LOGO
+from ui import create_embed
 
 
 class Sync(commands.Cog):
@@ -12,8 +11,8 @@ class Sync(commands.Cog):
     @commands.is_owner()
     async def sync(self, ctx: commands.Context):
         await self.client.tree.sync()
-        embed = normal(
-            author_name="Synced", author_icon_url=LOGO,
+        embed = create_embed(
+            author_name="Synced",
             description="Successfully synced slash commands."
         )
         await ctx.reply(embed=embed)

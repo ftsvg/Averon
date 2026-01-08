@@ -1,10 +1,10 @@
 from discord.ext import commands
 from discord import app_commands, Interaction, TextChannel, Role
 
-from core import LOGO, check_permissions
-from ui import normal, error, log_embed
+from core import check_permissions
+from ui import create_embed
 from ui.views import VerificationView
-from content import COMMANDS, COMMAND_ERRORS
+from content import COMMANDS, ERRORS, DESCRIPTIONS
 from database.handlers import VerificationManager
 
 
@@ -34,22 +34,15 @@ class Verify(commands.Cog):
             await interaction.response.defer(ephemeral=True)
 
         if error_key := await check_permissions(interaction, "admin"):
-            data = COMMAND_ERRORS[error_key]
             return await interaction.edit_original_response(
-                embed=error(
-                    title=data["title"],
-                    description=data["message"]
-                )
+                content = ERRORS[error_key]
             )        
 
         settings = VerificationManager(interaction.guild.id)
         settings.set_role(role.id)
 
         await interaction.edit_original_response(
-            embed=normal(
-                author_name="Verification role", author_icon_url=LOGO,
-                description=f"Verification role set to {role.mention}"
-            )
+            content=DESCRIPTIONS['verification_role_set'].format(role.mention)
         )
 
 
@@ -69,22 +62,15 @@ class Verify(commands.Cog):
             await interaction.response.defer(ephemeral=True)
 
         if error_key := await check_permissions(interaction, "admin"):
-            data = COMMAND_ERRORS[error_key]
             return await interaction.edit_original_response(
-                embed=error(
-                    title=data["title"],
-                    description=data["message"]
-                )
-            )        
+                content = ERRORS[error_key]
+            )       
 
         settings = VerificationManager(interaction.guild.id)
         settings.set_logs_channel(channel.id)
 
         await interaction.edit_original_response(
-            embed=normal(
-                author_name="Verification logs", author_icon_url=LOGO,
-                description=f"Verification logs channel set to {channel.mention}"
-            )
+            content=DESCRIPTIONS['verification_logs_set'].format(channel.mention)
         )
 
 
@@ -104,23 +90,15 @@ class Verify(commands.Cog):
             await interaction.response.defer(ephemeral=True)
 
         if error_key := await check_permissions(interaction, "admin"):
-            data = COMMAND_ERRORS[error_key]
             return await interaction.edit_original_response(
-                embed=error(
-                    title=data["title"],
-                    description=data["message"]
-                )
+                content = ERRORS[error_key]
             )
 
         settings = VerificationManager(interaction.guild.id)
         settings.set_captcha_enabled(enabled)
 
         await interaction.edit_original_response(
-            embed=normal(
-                author_name="Verification captcha",
-                author_icon_url=LOGO,
-                description=f"Captcha verification {'enabled' if enabled else 'disabled'}"
-            )
+            content=DESCRIPTIONS['verification_captcha_set'].format('enabled' if enabled else 'disabled')
         )
 
 
@@ -140,31 +118,23 @@ class Verify(commands.Cog):
             await interaction.response.defer(ephemeral=True)
 
         if error_key := await check_permissions(interaction, "admin"):
-            data = COMMAND_ERRORS[error_key]
             return await interaction.edit_original_response(
-                embed=error(
-                    title=data["title"],
-                    description=data["message"]
-                )
-            )        
+                content = ERRORS[error_key]
+            )       
 
         settings = VerificationManager(interaction.guild.id)
         settings.set_logs_channel(channel.id)
 
-        embed = normal(
-            author_name="Verification", author_icon_url=LOGO,
-            description="Please click the button below to verify."
-        )
-
         await channel.send(
-            embed=embed, view=VerificationView(self.client)
+            embed=create_embed(
+                author_name="Verification",
+                description="Please click the button below to verify."                
+            ), 
+            view=VerificationView(self.client)
         )
 
         await interaction.edit_original_response(
-            embed=normal(
-                author_name="Verification panel", author_icon_url=LOGO,
-                description=f"Verification panel sent to {channel.mention}"
-            )
+            content=DESCRIPTIONS['verification_panel'].format(channel.mention)
         )
 
 

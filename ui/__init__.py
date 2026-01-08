@@ -1,2 +1,6 @@
-from .embeds import normal, success, warning, error
-from .logs import log_embed
+from .embed import create_embed
+
+
+__all__ = [
+    'create_embed'
+]

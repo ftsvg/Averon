@@ -1,10 +1,10 @@
 from discord.ext import commands
 from discord import app_commands, Interaction, Object
 
-from core import check_permissions, send_log, LOGO
-from ui import normal, error, log_embed
+from core import check_permissions, send_log
+from ui import create_embed
 from logger import logger
-from content import COMMANDS, COMMAND_ERRORS
+from content import COMMANDS, ERRORS
 from database.handlers import CaseManager
 
 
@@ -31,22 +31,14 @@ class Unban(commands.Cog):
             await interaction.response.defer()
 
         if error_key := await check_permissions(interaction, "ban"):
-            data = COMMAND_ERRORS[error_key]
             return await interaction.edit_original_response(
-                embed=error(
-                    title=data["title"],
-                    description=data["message"]
-                )
+                content = ERRORS[error_key]
             )
 
         if not user_id.isdigit():
-            await interaction.edit_original_response(
-                embed=error(
-                    title=COMMAND_ERRORS['invalid_user_id_error']['title'],
-                    description=COMMAND_ERRORS['invalid_user_id_error']['message']
-                )
+            return await interaction.edit_original_response(
+                content=ERRORS['invalid_user_id_error']
             )
-            return
 
         guild = interaction.guild
         user = Object(id=int(user_id))
@@ -55,13 +47,9 @@ class Unban(commands.Cog):
             await guild.unban(user, reason=reason)
 
         except Exception:
-            await interaction.edit_original_response(
-                embed=error(
-                    title=COMMAND_ERRORS['user_not_banned_error']['title'],
-                    description=COMMAND_ERRORS['user_not_banned_error']['message']
-                )
+            return await interaction.edit_original_response(
+                content=ERRORS['user_not_banned_error']
             )
-            return
 
         manager = CaseManager(guild.id)
 
@@ -76,20 +64,16 @@ class Unban(commands.Cog):
             f"{interaction.user.name} unbanned {user.id} from {guild.name} - Case #{case_id}"
         )
 
-        description = f"User has been unbanned"
+        msg = f"`[{case_id}]` **{user_id}** has been unbanned"
 
         if reason:
-            description += f" for **{reason}**"
+            msg += f" for **{reason}**"
 
         await interaction.edit_original_response(
-            embed=normal(
-                author_name=f"unban [{case_id}]",
-                author_icon_url=LOGO,
-                description=description
-            )
+            content=msg
         )
 
-        _log_embed = log_embed(
+        embed = create_embed(
             author_name=f"unban [{case_id}]",
             fields=[
                 ("user id", f"`{user.id}`", True),
@@ -98,7 +82,7 @@ class Unban(commands.Cog):
             ]
         )
 
-        await send_log(interaction, _log_embed)
+        await send_log(interaction, embed)
 
 
 async def setup(client: commands.Bot) -> None:

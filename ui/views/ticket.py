@@ -11,9 +11,9 @@ from discord.ui import View, button, Button, Modal, TextInput
 
 from database.handlers import TicketManager, TicketSettingsManager
 from database import Ticket, TicketSettings
-from ui import error, normal, log_embed
-from content import COMMAND_ERRORS
-from core import LOGO, check_ticket_config_permissions
+from ui import create_embed
+from content import ERRORS, DESCRIPTIONS
+from core import check_ticket_config_permissions
 
 
 class TicketsView(View):
@@ -28,11 +28,8 @@ class TicketsView(View):
         ticket: Ticket = manager.get_ticket_by_user(interaction.user.id)
         if ticket:
             return await interaction.response.send_message(
-                embed=error(
-                    description=f"You already have an open ticket at <#{ticket.channel_id}>"
-                ),
-                ephemeral=True,
-                delete_after=30
+                content=DESCRIPTIONS['ticket_already_open'].format(ticket.channel_id),
+                ephemeral=True
             )
 
         await interaction.response.send_modal(TicketReasonView(self.client))
@@ -68,10 +65,7 @@ class TicketReasonView(Modal, title="Support ticket"):
             or settings.transcripts_channel_id is None
         ):
             return await interaction.followup.send(
-                embed=error(
-                    title=COMMAND_ERRORS["ticket_config_not_set_error"]["title"],
-                    description=COMMAND_ERRORS["ticket_config_not_set_error"]["message"]
-                ),
+                content=ERRORS['ticket_config_not_set_error'],
                 ephemeral=True
             )
 
@@ -90,7 +84,7 @@ class TicketReasonView(Modal, title="Support ticket"):
         await thread.send(
             content=f"Welcome {interaction.user.mention}!",
             allowed_mentions=AllowedMentions(users=True),
-            embed=log_embed(
+            embed=create_embed(
                 author_name="Support ticket",
                 description=(
                     "A staff member will assist you shortly.\n"
@@ -100,7 +94,7 @@ class TicketReasonView(Modal, title="Support ticket"):
                     ("user", f"{interaction.user.name} `{interaction.user.id}`", False),
                     ("reason", self.reason.value, False)
                 ],
-                thumbnail=interaction.user.display_avatar.url
+                thumbnail=interaction.user.display_avatar.url if interaction.user.display_avatar.url else None
             ),
             view=CloseTicketView(self.client)
         )
@@ -112,11 +106,7 @@ class TicketReasonView(Modal, title="Support ticket"):
         )
 
         await interaction.followup.send(
-            embed=normal(
-                author_name="Ticket created",
-                author_icon_url=LOGO,
-                description=f"You have successfully created a ticket at {thread.mention}"
-            ),
+            content=DESCRIPTIONS['ticket_created'].format(thread.mention),
             ephemeral=True
         )
 
@@ -132,12 +122,8 @@ class CloseTicketView(View):
             await interaction.response.defer(ephemeral=True)
 
         if error_key := await check_ticket_config_permissions(interaction, "other"):
-            data = COMMAND_ERRORS[error_key]
             return await interaction.edit_original_response(
-                embed=error(
-                    title=data["title"],
-                    description=data["message"]
-                )
+                content = ERRORS[error_key]
             )
 
         guild_id = interaction.guild.id
@@ -154,7 +140,7 @@ class CloseTicketView(View):
         settings: TicketSettings = TicketSettingsManager(guild_id).get_settings()
         transcript_channel = interaction.guild.get_channel(settings.transcripts_channel_id)
 
-        embed = log_embed(
+        embed = create_embed(
             author_name="Transcript",
             fields=[
                 ("ticket", f"{interaction.channel.name} `{interaction.channel.id}`", False),
@@ -170,12 +156,8 @@ class CloseTicketView(View):
             await transcript_channel.send(embed=embed)
 
         await interaction.followup.send(
-            embed=normal(
-                author_name="Ticket closed",
-                author_icon_url=LOGO,
-                description="This ticket has been closed."
-            )
+            content=DESCRIPTIONS['ticket_closed'].format(interaction.user.name)
         )
 
-        await asyncio.sleep(2)
+        await asyncio.sleep(1)
         await interaction.channel.delete()

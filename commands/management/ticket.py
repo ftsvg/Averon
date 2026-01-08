@@ -1,10 +1,10 @@
 from discord.ext import commands
 from discord import app_commands, Interaction, TextChannel, Role, Thread
 
-from core import LOGO, check_ticket_config_permissions
-from ui import normal, error, log_embed
+from core import check_ticket_config_permissions
+from ui import create_embed
 from ui.views import TicketsView
-from content import COMMANDS, COMMAND_ERRORS
+from content import COMMANDS, ERRORS, DESCRIPTIONS
 from database.handlers import TicketSettingsManager, TicketManager
 from database import Ticket, TicketSettings
 
@@ -35,22 +35,15 @@ class Tickets(commands.Cog):
             await interaction.response.defer(ephemeral=True)
 
         if error_key := await check_ticket_config_permissions(interaction, "config"):
-            data = COMMAND_ERRORS[error_key]
             return await interaction.edit_original_response(
-                embed=error(
-                    title=data["title"],
-                    description=data["message"]
-                )
+                content = ERRORS[error_key]
             )
 
         settings = TicketSettingsManager(interaction.guild.id)
         settings.set_ticket_channel(channel.id)
 
         await interaction.edit_original_response(
-            embed=normal(
-                author_name="Ticket channel", author_icon_url=LOGO,
-                description=f"Ticket channel set to {channel.mention}"
-            )
+            content=DESCRIPTIONS['ticket_channel_set'].format(channel.mention)
         )
 
 
@@ -70,22 +63,15 @@ class Tickets(commands.Cog):
             await interaction.response.defer(ephemeral=True)
 
         if error_key := await check_ticket_config_permissions(interaction, "config"):
-            data = COMMAND_ERRORS[error_key]
             return await interaction.edit_original_response(
-                embed=error(
-                    title=data["title"],
-                    description=data["message"]
-                )
+                content = ERRORS[error_key]
             )
 
         settings = TicketSettingsManager(interaction.guild.id)
         settings.set_staff_role(role.id)
 
         await interaction.edit_original_response(
-            embed=normal(
-                author_name="Ticket staff role", author_icon_url=LOGO,
-                description=f"Ticket staff role set to {role.mention}"
-            )
+            content=DESCRIPTIONS['ticket_staff_role_set'].format(role.mention)
         )
 
 
@@ -105,22 +91,12 @@ class Tickets(commands.Cog):
             await interaction.response.defer(ephemeral=True)
 
         if error_key := await check_ticket_config_permissions(interaction, "config"):
-            data = COMMAND_ERRORS[error_key]
             return await interaction.edit_original_response(
-                embed=error(
-                    title=data["title"],
-                    description=data["message"]
-                )
+                content = ERRORS[error_key]
             )
-
-        settings = TicketSettingsManager(interaction.guild.id)
-        settings.set_transcripts_channel(channel.id)
 
         await interaction.edit_original_response(
-            embed=normal(
-                author_name="Ticket transcripts", author_icon_url=LOGO,
-                description=f"Ticket transcripts channel set to {channel.mention}"
-            )
+            content=DESCRIPTIONS['ticket_transcript_channel_set'].format(channel.mention)
         )
 
 
@@ -140,29 +116,20 @@ class Tickets(commands.Cog):
             await interaction.response.defer(ephemeral=True)
 
         if error_key := await check_ticket_config_permissions(interaction, "config"):
-            data = COMMAND_ERRORS[error_key]
             return await interaction.edit_original_response(
-                embed=error(
-                    title=data["title"],
-                    description=data["message"]
-                )
+                content = ERRORS[error_key]
             )
 
-        embed = normal(
-            author_name="Support Tickets", author_icon_url=LOGO,
-            description="Click on the button below to create a ticket."
-        )
-
         await channel.send(
-            embed=embed,
+            embed=create_embed(
+                author_name="Support Tickets",
+                description="Click on the button below to create a ticket."
+            ),
             view=TicketsView(self.client)
         )
 
         await interaction.edit_original_response(
-            embed=normal(
-                author_name="Ticket panel", author_icon_url=LOGO,
-                description=f"Successfully sent the ticket panel to {channel.mention}"
-            )
+            content=DESCRIPTIONS['ticket_panel_sent'].format(channel.mention)
         )
 
 
@@ -182,12 +149,8 @@ class Tickets(commands.Cog):
             await interaction.response.defer(ephemeral=True)
 
         if error_key := await check_ticket_config_permissions(interaction, "other"):
-            data = COMMAND_ERRORS[error_key]
             return await interaction.edit_original_response(
-                embed=error(
-                    title=data["title"],
-                    description=data["message"]
-                )
+                content = ERRORS[error_key]
             )
         
         manager = TicketManager(interaction.guild.id)
@@ -195,11 +158,8 @@ class Tickets(commands.Cog):
         ticket = manager.get_ticket(channel.id)
         if not ticket:
             return await interaction.edit_original_response(
-                embed=error(
-                    title=COMMAND_ERRORS['ticket_not_found_error']['title'],
-                    description=COMMAND_ERRORS['ticket_not_found_error']['message']
-                )
-        )
+                content=ERRORS['ticket_not_found_error']
+            )
 
         manager.close_ticket(
             channel_id=channel.id,
@@ -207,10 +167,7 @@ class Tickets(commands.Cog):
         )
         
         await interaction.edit_original_response(
-            embed=normal(
-                author_name="Ticket closed", author_icon_url=LOGO,
-                description="The ticket has been closed and deleted."
-            )
+            content=DESCRIPTIONS['ticket_closed'].format(channel.mention)
         )
 
         ticket_details: Ticket = manager.get_ticket(interaction.channel.id)
@@ -219,7 +176,7 @@ class Tickets(commands.Cog):
         settings: TicketSettings = TicketSettingsManager(interaction.guild.id).get_settings()
         transcript_channel = interaction.guild.get_channel(settings.transcripts_channel_id)
 
-        embed = log_embed(
+        embed = create_embed(
             author_name="Transcript",
             fields=[
                 ("ticket", f"{interaction.channel.name} `{interaction.channel.id}`", False),
@@ -234,9 +191,7 @@ class Tickets(commands.Cog):
         if transcript_channel:
             await transcript_channel.send(embed=embed)        
 
-        await channel.delete(
-            reason=f"Ticket closed by {interaction.user}"
-        )
+        await channel.delete()
 
 
 async def setup(client: commands.Bot) -> None:
