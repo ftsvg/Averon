@@ -1,7 +1,7 @@
 from discord.ext import commands
 from discord import app_commands, Interaction, TextChannel, Role, Thread
 
-from core import check_permissions
+from core import check_permissions, send_transcript_log
 from ui import create_embed
 from ui.views import TicketsView
 from content import COMMANDS, ERRORS, DESCRIPTIONS
@@ -242,9 +242,6 @@ class Tickets(commands.Cog):
         ticket_details: Ticket = manager.get_ticket(channel.id)
         user = interaction.guild.get_member(ticket_details.user_id)
 
-        settings: TicketSettings = TicketSettingsManager(interaction.guild.id).get_settings()
-        transcript_channel = interaction.guild.get_channel(settings.transcripts_channel_id)
-
         embed = create_embed(
             author_name="Transcript",
             fields=[
@@ -257,8 +254,7 @@ class Tickets(commands.Cog):
             thumbnail=user.display_avatar.url if user and user.display_avatar else None
         )
 
-        if transcript_channel:
-            await transcript_channel.send(embed=embed)
+        await send_transcript_log(interaction, embed)
 
         await channel.delete()
 

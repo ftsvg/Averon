@@ -2,7 +2,7 @@ import traceback
 from discord.ext import commands
 from discord import app_commands, Interaction, Member, Forbidden, HTTPException
 
-from core import check_permissions, check_action_allowed, send_log, send_mod_dm
+from core import check_permissions, check_action_allowed, send_moderation_log, send_mod_dm
 from ui import create_embed
 from content import COMMANDS, ERRORS
 from database.handlers import CaseManager, LoggingManager
@@ -91,7 +91,7 @@ class Kick(commands.Cog):
             timestamp=True
         )
 
-        await send_log(interaction, embed)
+        await send_moderation_log(interaction, embed)
         await send_mod_dm(
             member,
             guild_name=interaction.guild.name,

@@ -17,7 +17,7 @@ from database.handlers import (
 from database import Ticket, TicketSettings
 from ui import create_embed
 from content import ERRORS, DESCRIPTIONS
-from core import check_permissions
+from core import check_permissions, send_transcript_log
 
 
 class TicketsView(View):
@@ -174,8 +174,6 @@ class CloseTicketView(View):
         )
 
         user = interaction.guild.get_member(ticket_details.user_id)
-        settings: TicketSettings = TicketSettingsManager(guild_id).get_settings()
-        transcript_channel = interaction.guild.get_channel(settings.transcripts_channel_id)
 
         embed = create_embed(
             author_name="Transcript",
@@ -189,8 +187,7 @@ class CloseTicketView(View):
             thumbnail=user.display_avatar.url if user and user.display_avatar else None
         )
 
-        if transcript_channel:
-            await transcript_channel.send(embed=embed)
+        await send_transcript_log(interaction, embed)
 
         await interaction.followup.send(
             content=DESCRIPTIONS['ticket_closed'].format(interaction.user.name),

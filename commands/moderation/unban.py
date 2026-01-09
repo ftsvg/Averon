@@ -2,7 +2,7 @@ import traceback
 from discord.ext import commands
 from discord import app_commands, Interaction, Object
 
-from core import check_permissions, send_log
+from core import check_permissions, send_moderation_log
 from ui import create_embed
 from content import COMMANDS, ERRORS
 from database.handlers import CaseManager, LoggingManager
@@ -98,7 +98,7 @@ class Unban(commands.Cog):
             ]
         )
 
-        await send_log(interaction, embed)
+        await send_moderation_log(interaction, embed)
 
 
 async def setup(client: commands.Bot) -> None:
