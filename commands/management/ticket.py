@@ -230,7 +230,7 @@ class Tickets(commands.Cog):
         user = interaction.guild.get_member(ticket_details.user_id)
 
         embed = create_embed(
-            author_name="Transcript",
+            author_name=f"transcript [{ticket_details.ticket_id}]",
             fields=[
                 ("Ticket", f"{channel.name} `{channel.id}`", False),
                 ("Reason", ticket_details.reason, False),
@@ -245,6 +245,58 @@ class Tickets(commands.Cog):
         await send_user_dm(interaction, user, embed=embed)
 
         await channel.delete()
+
+
+    @ticket.command(
+        name=COMMANDS['ticket_view']['name'],
+        description=COMMANDS['ticket_view']['description']
+    )
+    @app_commands.describe(ticket_id=COMMANDS['ticket_view']['ticket_id'])
+    async def ticket_view(
+        self,
+        interaction: Interaction,
+        ticket_id: str
+    ):
+        if not interaction.response.is_done():
+            await interaction.response.defer(ephemeral=True)
+
+        logging_manager = LoggingManager(interaction.guild.id)
+
+        if error_key := await check_permissions(interaction, "other"):
+            logging_manager.create_log(
+                "WARNING", f"Permission denied: {interaction.user} ({interaction.user.id}) attempted to view ticket {ticket_id}"
+            )
+            return await interaction.edit_original_response(
+                content=ERRORS[error_key]
+            )
+
+        details = TicketManager(interaction.guild.id).get_ticket_by_id(ticket_id)
+
+        if not details:
+            logging_manager.create_log(
+                "ERROR", f"Ticket view failed: Ticket ID {ticket_id} not found (requested by {interaction.user} ({interaction.user.id}))"
+            )
+            return await interaction.edit_original_response(
+                content=ERRORS['ticket_not_found_error_id']
+            )
+        
+        user = interaction.guild.get_member(details.user_id)
+        channel = interaction.guild.get_channel(details.channel_id)
+
+        embed = create_embed(
+            author_name=f"ticket [{details.ticket_id}]",
+            fields=[
+                ("Ticket", f"{channel.mention} `{channel.id}`", False),
+                ("User", f"{user.name} `{user.id}`", False),
+                ("Created At", f"<t:{details.created_at}:R>", False),
+                ("Reason", details.reason, False)
+            ],
+            thumbnail=user.display_avatar.url if user and user.display_avatar else None
+        )
+
+        return await interaction.edit_original_response(
+            embed=embed
+        )
 
 
 async def setup(client: commands.Bot) -> None:

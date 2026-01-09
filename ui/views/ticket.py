@@ -120,11 +120,17 @@ class TicketReasonView(Modal, title="Support ticket"):
             reason=f"Support ticket opened by {user} ({user.id})"
         )
 
+        ticket_id = manager.create_ticket(
+            user.id,
+            channel.id,
+            self.reason.value
+        )
+
         await channel.send(
             content=f"Welcome {user.mention}!",
             allowed_mentions=AllowedMentions(users=True),
             embed=create_embed(
-                author_name="Support ticket",
+                author_name=f"support ticket [{ticket_id}]",
                 description=(
                     "A staff member will assist you shortly.\n"
                     "Please describe your issue in detail."
@@ -138,14 +144,8 @@ class TicketReasonView(Modal, title="Support ticket"):
             view=CloseTicketView(self.client)
         )
 
-        manager.create_ticket(
-            user.id,
-            channel.id,
-            self.reason.value
-        )
-
         logging_manager.create_log(
-            "INFO", f"Ticket created: {user} ({user.id}) opened ticket {channel.id}"
+            "INFO", f"Ticket created: {user} ({user.id}) opened ticket {channel.id} [{ticket_id}]"
         )
 
         await interaction.followup.send(
@@ -192,7 +192,7 @@ class CloseTicketView(View):
         user = interaction.guild.get_member(ticket_details.user_id)
 
         embed = create_embed(
-            author_name="Transcript",
+            author_name=f"transcript [{ticket_details.ticket_id}]",
             fields=[
                 ("Ticket", f"{interaction.channel.name} `{interaction.channel.id}`", False),
                 ("Reason", ticket_details.reason, False),

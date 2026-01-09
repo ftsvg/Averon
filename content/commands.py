@@ -121,5 +121,10 @@ COMMANDS = {
         "name": "log",
         "description": "View details about a log by id",
         "log_id": "The log id to look up"
-    }    
+    },
+    "ticket_view": {
+        "name": "view",
+        "description": "View details about a ticket",
+        "ticket_id": "The ticket id"
+    }   
 }

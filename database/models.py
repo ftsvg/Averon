@@ -29,6 +29,7 @@ class Case:
 class Ticket:
     id: int
     guild_id: int
+    ticket_id: str
     user_id: int
     reason: str
     channel_id: int

@@ -21,6 +21,7 @@ ERRORS = {
     "no_cases_error": "This user has no cases.",
     "ticket_config_not_set_error": "Please make sure `/ticket channel`, `/ticket role` and `/ticket transcripts` are configured.",
     "ticket_not_found_error": "No ticket was found for this channel.",
+    "ticket_not_found_error_id": "No open ticket was found with this id.",
     "already_verified_error": "You are already verified.",
     "verification_role_error": "The verification role is invalid. Please contact an administrator to reconfigure it.",
     "verification_config_not_set_error": "Please make sure `/verification role` and `/verification logs` are configured.",
