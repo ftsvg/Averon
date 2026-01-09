@@ -71,7 +71,7 @@ class Tickets(commands.Cog):
         settings.set_staff_role(role.id)
 
         await interaction.edit_original_response(
-            content=DESCRIPTIONS['ticket_staff_role_set'].format(role.mention)
+            content=DESCRIPTIONS['ticket_staff_role_set'].format(role.name)
         )
 
 
