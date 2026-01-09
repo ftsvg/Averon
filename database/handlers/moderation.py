@@ -1,4 +1,4 @@
-from database import ensure_cursor, Cursor
+from database import Cursor, ensure_cursor
 
 
 class ModerationManager:

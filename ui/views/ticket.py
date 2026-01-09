@@ -1,23 +1,24 @@
 import asyncio
+
 from discord import (
+    AllowedMentions,
+    ButtonStyle,
+    ChannelType,
     Client,
     Interaction,
-    ButtonStyle,
     TextStyle,
-    ChannelType,
-    AllowedMentions
 )
-from discord.ui import View, button, Button, Modal, TextInput
+from discord.ui import Button, Modal, TextInput, View, button
 
+from content import DESCRIPTIONS, ERRORS
+from core import check_permissions, send_transcript_log, send_user_dm
+from database import Ticket, TicketSettings
 from database.handlers import (
+    LoggingManager,
     TicketManager,
     TicketSettingsManager,
-    LoggingManager
 )
-from database import Ticket, TicketSettings
 from ui import create_embed
-from content import ERRORS, DESCRIPTIONS
-from core import check_permissions, send_transcript_log, send_user_dm
 
 
 class TicketsView(View):

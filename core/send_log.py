@@ -1,9 +1,10 @@
-import sys
 import traceback
-from discord import Interaction, Embed
 
-from database.handlers import ModerationManager, TicketSettingsManager, LoggingManager
+from discord import Embed, Interaction
+
 from database import TicketSettings
+from database.handlers import LoggingManager, ModerationManager, TicketSettingsManager
+
 
 
 async def send_moderation_log(

@@ -1,12 +1,18 @@
-import traceback
-from discord import Interaction, ButtonStyle, Message, TextStyle, Member, Embed
-from discord.ui import View, button, Button, Modal, TextInput
+from discord import (
+    ButtonStyle,
+    Embed,
+    Interaction,
+    Member,
+    Message,
+    TextStyle,
+)
+from discord.ui import Button, Modal, TextInput, View, button
 
-from ui import create_embed
+from content import DESCRIPTIONS, ERRORS
 from core.utils import format_duration
-from content import ERRORS, DESCRIPTIONS
-from database.handlers import CaseManager, LoggingManager
 from database import Case
+from database.handlers import CaseManager, LoggingManager
+from ui import create_embed
 
 
 class CaseView(View):

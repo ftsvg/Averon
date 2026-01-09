@@ -1,10 +1,11 @@
 import os
-from discord.ext import commands
-from discord import app_commands, Intents, Interaction
 
-from logger import logger
+from discord import Intents, Interaction, app_commands
+from discord.ext import commands
+
 from core import InteractionErrorHandler
-from ui.views import TicketsView, CloseTicketView, VerificationView
+from logger import logger
+from ui.views import CloseTicketView, TicketsView, VerificationView
 
 
 intents = Intents.all()

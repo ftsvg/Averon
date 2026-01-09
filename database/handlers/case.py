@@ -1,8 +1,8 @@
 import time
 from typing import Optional
 
-from database import ensure_cursor, Cursor, Case
 from core.utils import generate_id
+from database import Case, Cursor, ensure_cursor
 
 
 class CaseManager:

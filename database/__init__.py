@@ -1,8 +1,8 @@
-from .connection import Cursor, ensure_cursor, async_ensure_cursor
+from .connection import Cursor, async_ensure_cursor, ensure_cursor
 from .models import *
 
 __all__ = [
-    'ensure_cursor',
-    'async_ensure_cursor',
-    'Cursor'
+    "async_ensure_cursor",
+    "Cursor",
+    "ensure_cursor",
 ]

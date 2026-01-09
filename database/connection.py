@@ -1,4 +1,5 @@
 import functools
+
 import pymysql
 from pymysql.cursors import Cursor
 

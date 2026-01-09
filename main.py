@@ -1,4 +1,4 @@
-from config import Settings, Client
+from config import Client, Settings
 
 
 Settings.validate()

@@ -1,16 +1,16 @@
+from discord import Interaction, Role, TextChannel, Thread, app_commands
 from discord.ext import commands
-from discord import app_commands, Interaction, TextChannel, Role, Thread
 
+from content import COMMANDS, DESCRIPTIONS, ERRORS
 from core import check_permissions, send_transcript_log, send_user_dm
+from database import Ticket
+from database.handlers import (
+    LoggingManager,
+    TicketManager,
+    TicketSettingsManager,
+)
 from ui import create_embed
 from ui.views import TicketsView
-from content import COMMANDS, ERRORS, DESCRIPTIONS
-from database.handlers import (
-    TicketSettingsManager,
-    TicketManager,
-    LoggingManager
-)
-from database import Ticket, TicketSettings
 
 
 class Tickets(commands.Cog):

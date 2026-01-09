@@ -1,9 +1,15 @@
 import traceback
-from discord.ext import commands
-from discord import app_commands, Interaction, Forbidden, HTTPException
 
+from discord import (
+    Forbidden,
+    HTTPException,
+    Interaction,
+    app_commands,
+)
+from discord.ext import commands
+
+from content import COMMANDS, DESCRIPTIONS, ERRORS
 from core import check_permissions
-from content import COMMANDS, ERRORS, DESCRIPTIONS
 from database.handlers import LoggingManager
 
 

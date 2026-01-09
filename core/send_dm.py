@@ -1,5 +1,6 @@
 import traceback
-from discord import Interaction, Member, User, Embed, Forbidden, HTTPException
+
+from discord import Embed, Forbidden, HTTPException, Interaction, Member, User
 
 from database.handlers import LoggingManager
 

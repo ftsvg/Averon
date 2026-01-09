@@ -1,11 +1,23 @@
 import traceback
-from discord.ext import commands
-from discord import app_commands, Interaction, Member, Forbidden, HTTPException
 
-from core import check_permissions, check_action_allowed, send_moderation_log, send_user_dm
-from ui import create_embed
+from discord import (
+    Forbidden,
+    HTTPException,
+    Interaction,
+    Member,
+    app_commands,
+)
+from discord.ext import commands
+
 from content import COMMANDS, ERRORS
+from core import (
+    check_action_allowed,
+    check_permissions,
+    send_moderation_log,
+    send_user_dm,
+)
 from database.handlers import CaseManager, LoggingManager
+from ui import create_embed
 
 
 class Ban(commands.Cog):
