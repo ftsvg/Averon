@@ -3,9 +3,9 @@ import asyncio
 from discord import (
     AllowedMentions,
     ButtonStyle,
-    ChannelType,
     Client,
     Interaction,
+    PermissionOverwrite,
     TextStyle,
 )
 from discord.ui import Button, Modal, TextInput, View, button
@@ -35,9 +35,7 @@ class TicketsView(View):
 
         if ticket:
             logging_manager.create_log(
-                'INFO',
-                f"Ticket creation blocked: {interaction.user} ({interaction.user.id}) "
-                f"already has open ticket {ticket.channel_id}"
+                "INFO", f"Ticket creation blocked: {interaction.user} ({interaction.user.id}) already has open ticket {ticket.channel_id}"
             )
             return await interaction.response.send_message(
                 content=DESCRIPTIONS['ticket_already_open'].format(ticket.channel_id),
@@ -50,7 +48,7 @@ class TicketsView(View):
 class TicketReasonView(Modal, title="Support ticket"):
     reason = TextInput(
         label="Ticket reason",
-        placeholder="I need help with...",
+        placeholder="Your reason here: ",
         style=TextStyle.paragraph,
         required=True,
         min_length=3,
@@ -65,74 +63,95 @@ class TicketReasonView(Modal, title="Support ticket"):
         if not interaction.response.is_done():
             await interaction.response.defer(ephemeral=True)
 
-        guild_id = interaction.guild.id
-        logging_manager = LoggingManager(guild_id)
+        guild = interaction.guild
+        user = interaction.user
+        guild_id = guild.id
 
+        logging_manager = LoggingManager(guild_id)
         manager = TicketManager(guild_id)
         settings: TicketSettings = TicketSettingsManager(guild_id).get_settings()
 
         if (
             settings is None
             or settings.staff_role_id is None
-            or settings.ticket_channel_id is None
+            or settings.ticket_category_id is None
             or settings.transcripts_channel_id is None
         ):
             logging_manager.create_log(
-                'ERROR',
-                f"Ticket creation failed: ticket system not configured "
-                f"(requested by {interaction.user} ({interaction.user.id}))"
+                "ERROR", f"Ticket creation failed: ticket system not configured (requested by {user} ({user.id}))"
             )
             return await interaction.followup.send(
-                content=ERRORS['ticket_config_not_set_error'],
+                content=ERRORS["ticket_config_not_set_error"],
                 ephemeral=True
             )
 
-        channel = interaction.guild.get_channel(settings.ticket_channel_id)
-        staff_role = interaction.guild.get_role(settings.staff_role_id)
+        category = guild.get_channel(settings.ticket_category_id)
+        staff_role = guild.get_role(settings.staff_role_id)
 
-        thread = await channel.create_thread(
-            name=f"ticket-{interaction.user.name}",
-            type=ChannelType.private_thread,
-            reason=self.reason.value
+        if category is None or staff_role is None:
+            logging_manager.create_log(
+                "ERROR", f"Ticket creation failed: ticket system not configured (requested by {user} ({user.id}))"
+            )
+            return await interaction.followup.send(
+                content=ERRORS["ticket_config_not_set_error"],
+                ephemeral=True
+            )
+        
+        overwrites = {
+            guild.default_role: PermissionOverwrite(
+                view_channel=False
+            ),
+            user: PermissionOverwrite(
+                view_channel=True,
+                send_messages=True,
+                read_message_history=True
+            ),
+            staff_role: PermissionOverwrite(
+                view_channel=True,
+                send_messages=True,
+                read_message_history=True
+            )
+        }
+
+        channel = await guild.create_text_channel(
+            name=f"ticket-{user.name}".lower(),
+            category=category,
+            overwrites=overwrites,
+            reason=f"Support ticket opened by {user} ({user.id})"
         )
 
-        for member in staff_role.members:
-            await thread.add_user(member)
-
-        await thread.send(
-            content=f"Welcome {interaction.user.mention}!",
+        await channel.send(
+            content=f"Welcome {user.mention}!",
             allowed_mentions=AllowedMentions(users=True),
             embed=create_embed(
                 author_name="Support ticket",
                 description=(
                     "A staff member will assist you shortly.\n"
-                    "Please provide any additional details if needed."
+                    "Please describe your issue in detail."
                 ),
                 fields=[
-                    ("User", f"{interaction.user.name} `{interaction.user.id}`", False),
+                    ("User", f"{user.name} `{user.id}`", False),
                     ("Reason", self.reason.value, False)
                 ],
-                thumbnail=interaction.user.display_avatar.url if interaction.user.display_avatar else None
+                thumbnail=user.display_avatar.url if user.display_avatar else None
             ),
             view=CloseTicketView(self.client)
         )
 
         manager.create_ticket(
-            interaction.user.id,
-            thread.id,
+            user.id,
+            channel.id,
             self.reason.value
         )
 
         logging_manager.create_log(
-            'INFO',
-            f"Ticket created: {interaction.user} ({interaction.user.id}) "
-            f"opened ticket {thread.id}"
+            "INFO", f"Ticket created: {user} ({user.id}) opened ticket {channel.id}"
         )
 
         await interaction.followup.send(
-            content=DESCRIPTIONS['ticket_created'].format(thread.mention),
+            content=DESCRIPTIONS["ticket_created"].format(channel.mention),
             ephemeral=True
-        )
+        ) 
 
 
 class CloseTicketView(View):
@@ -149,9 +168,7 @@ class CloseTicketView(View):
 
         if error_key := await check_permissions(interaction, "other"):
             logging_manager.create_log(
-                'WARNING',
-                f"Permission denied: {interaction.user} ({interaction.user.id}) attempted to close "
-                f"ticket {interaction.channel.id}"
+                "WARNING", f"Permission denied: {interaction.user} ({interaction.user.id}) attempted to close ticket {interaction.channel.id}"
             )
             return await interaction.followup.send(
                 content=ERRORS[error_key],
@@ -169,9 +186,7 @@ class CloseTicketView(View):
         )
 
         logging_manager.create_log(
-            'INFO',
-            f"Ticket closed: Ticket {interaction.channel.id} closed by "
-            f"{interaction.user} ({interaction.user.id})"
+            "INFO", f"Ticket closed: Ticket {interaction.channel.id} closed by {interaction.user} ({interaction.user.id})"
         )
 
         user = interaction.guild.get_member(ticket_details.user_id)
@@ -192,8 +207,7 @@ class CloseTicketView(View):
         await send_user_dm(interaction, user, embed=embed)
         
         await interaction.followup.send(
-            content=DESCRIPTIONS['ticket_closed'].format(interaction.user.name),
-            ephemeral=True
+            content=DESCRIPTIONS['ticket_closed'].format(interaction.user.name)
         )
 
         await asyncio.sleep(1)

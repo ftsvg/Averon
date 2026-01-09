@@ -8,19 +8,19 @@ class TicketSettingsManager:
         self._guild_id = guild_id
 
     @ensure_cursor
-    def set_ticket_channel(
+    def set_ticket_category(
         self,
-        channel_id: int,
+        category_id: int,
         *,
         cursor: Cursor = None
     ) -> None:
         cursor.execute(
             """
-            INSERT INTO ticket_settings (guild_id, ticket_channel_id)
+            INSERT INTO ticket_settings (guild_id, ticket_category_id)
             VALUES (%s, %s)
-            ON DUPLICATE KEY UPDATE ticket_channel_id = VALUES(ticket_channel_id)
+            ON DUPLICATE KEY UPDATE ticket_category_id = VALUES(ticket_category_id)
             """,
-            (self._guild_id, channel_id)
+            (self._guild_id, category_id)
         )
 
 
@@ -68,7 +68,7 @@ class TicketSettingsManager:
             """
             SELECT
                 guild_id,
-                ticket_channel_id,
+                ticket_category_id,
                 staff_role_id,
                 transcripts_channel_id
             FROM ticket_settings

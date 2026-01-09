@@ -1,5 +1,5 @@
 DESCRIPTIONS = {
-    "ticket_channel_set": "Ticket channel set to {}.",
+    "ticket_category_set": "Ticket category set to **{}**.",
     "ticket_staff_role_set": "Ticket staff role set to **{}**.",
     "ticket_transcript_channel_set": "Ticket transcript channel set to {}.",
     "ticket_panel_sent": "Ticket panel sent to {}.",

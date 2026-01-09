@@ -40,7 +40,7 @@ class Ticket:
 @dataclass(slots=True)
 class TicketSettings:
     guild_id: int
-    ticket_channel_id: Optional[int]
+    ticket_category_id: Optional[int]
     staff_role_id: Optional[int]
     transcripts_channel_id: Optional[int]
 

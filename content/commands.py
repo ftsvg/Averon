@@ -77,10 +77,10 @@ COMMANDS = {
         "description": "Sends a panel to the specified channel",
         "channel": "The channel to send the panel to"
     },
-    "ticket_channel": {
-        "name": "channel",
-        "description": "Setup ticket channel",
-        "channel": "The channel where tickets get created"
+    "ticket_category": {
+        "name": "category",
+        "description": "Setup ticket category",
+        "category": "The category where tickets get created"
     },
     "ticket_role": {
         "name": "role",

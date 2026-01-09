@@ -1,9 +1,9 @@
-from discord import Interaction, Role, TextChannel, Thread, app_commands
+from discord import CategoryChannel, Interaction, Role, TextChannel, app_commands
 from discord.ext import commands
 
 from content import COMMANDS, DESCRIPTIONS, ERRORS
 from core import check_permissions, send_transcript_log, send_user_dm
-from database import Ticket
+from database import Ticket, TicketSettings
 from database.handlers import (
     LoggingManager,
     TicketManager,
@@ -24,43 +24,37 @@ class Tickets(commands.Cog):
 
 
     @ticket.command(
-        name=COMMANDS['ticket_channel']['name'],
-        description=COMMANDS['ticket_channel']['description']
+        name=COMMANDS['ticket_category']['name'],
+        description=COMMANDS['ticket_category']['description']
     )
-    @app_commands.describe(channel=COMMANDS['ticket_channel']['channel'])
-    async def ticket_channel(
+    @app_commands.describe(category=COMMANDS['ticket_category']['category'])
+    async def ticket_category(
         self,
         interaction: Interaction,
-        channel: TextChannel
+        category: CategoryChannel
     ):
         if not interaction.response.is_done():
             await interaction.response.defer(ephemeral=True)
-
-        1/0
 
         logging_manager = LoggingManager(interaction.guild.id)
 
         if error_key := await check_permissions(interaction, "admin"):
             logging_manager.create_log(
-                'WARNING',
-                f"Permission denied: {interaction.user} ({interaction.user.id}) attempted to set "
-                f"ticket channel to {channel} ({channel.id})"
+                "WARNING", f"Permission denied: {interaction.user} ({interaction.user.id}) attempted to set ticket category to {category} ({category.id})"
             )
             return await interaction.edit_original_response(
                 content=ERRORS[error_key]
             )
 
         settings = TicketSettingsManager(interaction.guild.id)
-        settings.set_ticket_channel(channel.id)
+        settings.set_ticket_category(category.id)
 
         logging_manager.create_log(
-            'INFO',
-            f"Ticket channel updated: {interaction.user} ({interaction.user.id}) set "
-            f"ticket channel to {channel} ({channel.id})"
+            "INFO", f"Ticket category updated: {interaction.user} ({interaction.user.id}) set ticket category to {category} ({category.id})"
         )
 
         await interaction.edit_original_response(
-            content=DESCRIPTIONS['ticket_channel_set'].format(channel.mention)
+            content=DESCRIPTIONS['ticket_category_set'].format(category.name)
         )
 
 
@@ -81,9 +75,7 @@ class Tickets(commands.Cog):
 
         if error_key := await check_permissions(interaction, "admin"):
             logging_manager.create_log(
-                'WARNING',
-                f"Permission denied: {interaction.user} ({interaction.user.id}) attempted to set "
-                f"ticket staff role to {role} ({role.id})"
+                "WARNING", f"Permission denied: {interaction.user} ({interaction.user.id}) attempted to set ticket staff role to {role} ({role.id})"
             )
             return await interaction.edit_original_response(
                 content=ERRORS[error_key]
@@ -93,9 +85,7 @@ class Tickets(commands.Cog):
         settings.set_staff_role(role.id)
 
         logging_manager.create_log(
-            'INFO',
-            f"Ticket staff role updated: {interaction.user} ({interaction.user.id}) set "
-            f"staff role to {role} ({role.id})"
+            "INFO", f"Ticket staff role updated: {interaction.user} ({interaction.user.id}) set staff role to {role} ({role.id})"
         )
 
         await interaction.edit_original_response(
@@ -120,9 +110,7 @@ class Tickets(commands.Cog):
 
         if error_key := await check_permissions(interaction, "admin"):
             logging_manager.create_log(
-                'WARNING',
-                f"Permission denied: {interaction.user} ({interaction.user.id}) attempted to set "
-                f"ticket transcript channel to {channel} ({channel.id})"
+                "WARNING", f"Permission denied: {interaction.user} ({interaction.user.id}) attempted to set ticket transcript channel to {channel} ({channel.id})"
             )
             return await interaction.edit_original_response(
                 content=ERRORS[error_key]
@@ -132,9 +120,7 @@ class Tickets(commands.Cog):
         settings.set_transcripts_channel(channel.id)
 
         logging_manager.create_log(
-            'INFO',
-            f"Ticket transcript channel updated: {interaction.user} ({interaction.user.id}) set "
-            f"transcript channel to {channel} ({channel.id})"
+            "INFO", f"Ticket transcript channel updated: {interaction.user} ({interaction.user.id}) set transcript channel to {channel} ({channel.id})"
         )
 
         await interaction.edit_original_response(
@@ -159,9 +145,7 @@ class Tickets(commands.Cog):
 
         if error_key := await check_permissions(interaction, "admin"):
             logging_manager.create_log(
-                'WARNING',
-                f"Permission denied: {interaction.user} ({interaction.user.id}) attempted to send "
-                f"ticket panel to {channel} ({channel.id})"
+                "WARNING", f"Permission denied: {interaction.user} ({interaction.user.id}) attempted to send ticket panel to {channel} ({channel.id})"
             )
             return await interaction.edit_original_response(
                 content=ERRORS[error_key]
@@ -176,9 +160,7 @@ class Tickets(commands.Cog):
         )
 
         logging_manager.create_log(
-            'INFO',
-            f"Ticket panel sent: {interaction.user} ({interaction.user.id}) sent "
-            f"ticket panel to {channel} ({channel.id})"
+            "INFO", f"Ticket panel sent: {interaction.user} ({interaction.user.id}) sent ticket panel to {channel} ({channel.id})"
         )
 
         await interaction.edit_original_response(
@@ -194,7 +176,7 @@ class Tickets(commands.Cog):
     async def ticket_close(
         self,
         interaction: Interaction,
-        channel: Thread
+        channel: TextChannel
     ):
         if not interaction.response.is_done():
             await interaction.response.defer(ephemeral=True)
@@ -203,12 +185,21 @@ class Tickets(commands.Cog):
 
         if error_key := await check_permissions(interaction, "other"):
             logging_manager.create_log(
-                'WARNING',
-                f"Permission denied: {interaction.user} ({interaction.user.id}) attempted to close "
-                f"ticket thread {channel} ({channel.id})"
+                "WARNING", f"Permission denied: {interaction.user} ({interaction.user.id}) attempted to close ticket channel {channel} ({channel.id})"
             )
             return await interaction.edit_original_response(
                 content=ERRORS[error_key]
+            )
+        
+        settings: TicketSettings = TicketSettingsManager(interaction.guild.id).get_settings()
+
+        if (
+            settings is None
+            or settings.ticket_category_id is None
+            or channel.category_id != settings.ticket_category_id
+        ):
+            return await interaction.edit_original_response(
+                content=ERRORS["ticket_not_found_error"]
             )
 
         manager = TicketManager(interaction.guild.id)
@@ -216,9 +207,7 @@ class Tickets(commands.Cog):
 
         if not ticket:
             logging_manager.create_log(
-                'INFO',
-                f"Ticket close failed: Ticket for channel {channel.id} does not exist "
-                f"(requested by {interaction.user} ({interaction.user.id}))"
+                "INFO", f"Ticket close failed: Ticket for channel {channel.id} does not exist (requested by {interaction.user} ({interaction.user.id}))"
             )
             return await interaction.edit_original_response(
                 content=ERRORS['ticket_not_found_error']
@@ -230,9 +219,7 @@ class Tickets(commands.Cog):
         )
 
         logging_manager.create_log(
-            'INFO',
-            f"Ticket closed: Ticket {channel.id} closed by "
-            f"{interaction.user} ({interaction.user.id})"
+            "INFO", f"Ticket closed: Ticket {channel.id} closed by {interaction.user} ({interaction.user.id})"
         )
 
         await interaction.edit_original_response(
