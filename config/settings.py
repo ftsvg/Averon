@@ -1,7 +1,10 @@
 from os import getenv
-from dotenv import load_dotenv; load_dotenv()
+
+from dotenv import load_dotenv
 
 from content import SETTINGS_ERRORS
+
+load_dotenv()
 
 
 class Settings:

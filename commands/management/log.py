@@ -1,7 +1,7 @@
+from discord import Interaction, app_commands
 from discord.ext import commands
-from discord import app_commands, Interaction
 
-from content import ERRORS, COMMANDS
+from content import COMMANDS, ERRORS
 from database.handlers import LoggingManager
 
 

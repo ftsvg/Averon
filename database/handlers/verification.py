@@ -1,6 +1,6 @@
 from typing import Optional
 
-from database import ensure_cursor, Cursor, VerificationSettings
+from database import Cursor, VerificationSettings, ensure_cursor
 
 
 class VerificationManager:

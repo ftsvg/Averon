@@ -1,4 +1,5 @@
 import traceback
+
 from discord.ext import commands
 
 from ui import create_embed

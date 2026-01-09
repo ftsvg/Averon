@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
+
 from discord import Embed
 
-from core import MAIN_COLOR, LOGO
+from core import LOGO, MAIN_COLOR
 
 
 def create_embed(

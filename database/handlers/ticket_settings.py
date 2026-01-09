@@ -1,6 +1,6 @@
 from typing import Optional
 
-from database import ensure_cursor, Cursor, TicketSettings
+from database import Cursor, TicketSettings, ensure_cursor
 
 
 class TicketSettingsManager:

@@ -1,9 +1,9 @@
+from discord import Interaction, TextChannel, app_commands
 from discord.ext import commands
-from discord import app_commands, Interaction, TextChannel
 
-from content import COMMANDS, ERRORS, DESCRIPTIONS
+from content import COMMANDS, DESCRIPTIONS, ERRORS
 from core import check_permissions
-from database.handlers import ModerationManager, LoggingManager
+from database.handlers import LoggingManager, ModerationManager
 
 
 class Moderation(commands.Cog):

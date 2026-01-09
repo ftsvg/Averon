@@ -1,5 +1,5 @@
-import string
 import secrets
+import string
 
 
 def generate_id(length: int = 6) -> str:

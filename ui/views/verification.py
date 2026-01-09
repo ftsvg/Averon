@@ -1,15 +1,16 @@
-import time
 import os
 import secrets
 import string
-from discord import Client, Interaction, ButtonStyle, File, Message
-from captcha.image import ImageCaptcha
-from discord.ui import View, button, Button, Modal, TextInput
+import time
 
-from database.handlers import VerificationManager, LoggingManager
+from captcha.image import ImageCaptcha
+from discord import ButtonStyle, Client, File, Interaction, Message
+from discord.ui import Button, Modal, TextInput, View, button
+
+from content import DESCRIPTIONS, ERRORS
 from database import VerificationSettings
+from database.handlers import LoggingManager, VerificationManager
 from ui import create_embed
-from content import ERRORS, DESCRIPTIONS
 
 
 verifying = set()

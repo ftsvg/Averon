@@ -1,7 +1,7 @@
 import time
 from typing import Optional
 
-from database import ensure_cursor, Cursor, Ticket
+from database import Cursor, Ticket, ensure_cursor
 
 
 class TicketManager:

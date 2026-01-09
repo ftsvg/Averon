@@ -1,12 +1,12 @@
+from discord import Interaction, Member, app_commands
 from discord.ext import commands
-from discord import app_commands, Interaction, Member
 
-from content import COMMANDS, ERRORS, DESCRIPTIONS
+from content import COMMANDS, DESCRIPTIONS, ERRORS
 from core import check_permissions
 from core.utils import format_duration
-from ui import create_embed
-from ui.views import CaseView, ConfirmCaseClearModal, CasePagination
 from database.handlers import CaseManager, LoggingManager
+from ui import create_embed
+from ui.views import CasePagination, CaseView, ConfirmCaseClearModal
 
 
 class Case(commands.Cog):

@@ -1,13 +1,12 @@
-from .case import CaseView, ConfirmCaseClearModal, CasePagination
-from .ticket import TicketsView, CloseTicketView
+from .case import CasePagination, CaseView, ConfirmCaseClearModal
+from .ticket import CloseTicketView, TicketsView
 from .verification import VerificationView
 
-
 __all__ = [
-    'CaseView',
-    'ConfirmCaseClearModal',
-    'CasePagination',
-    'TicketsView',
-    'CloseTicketView',
-    'VerificationView'
+    "CasePagination",
+    "CaseView",
+    "ConfirmCaseClearModal",
+    "CloseTicketView",
+    "TicketsView",
+    "VerificationView",
 ]

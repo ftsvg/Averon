@@ -1,8 +1,8 @@
 import time
 from typing import Optional
 
-from database import ensure_cursor, Cursor, LogEntry, LogLevel
 from core.utils import generate_id
+from database import Cursor, LogEntry, LogLevel, ensure_cursor
 from logger import logger
 
 

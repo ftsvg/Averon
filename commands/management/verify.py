@@ -1,11 +1,11 @@
+from discord import Interaction, Role, TextChannel, app_commands
 from discord.ext import commands
-from discord import app_commands, Interaction, TextChannel, Role
 
+from content import COMMANDS, DESCRIPTIONS, ERRORS
 from core import check_permissions
+from database.handlers import LoggingManager, VerificationManager
 from ui import create_embed
 from ui.views import VerificationView
-from content import COMMANDS, ERRORS, DESCRIPTIONS
-from database.handlers import VerificationManager, LoggingManager
 
 
 class Verify(commands.Cog):
