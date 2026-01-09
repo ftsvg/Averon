@@ -1,3 +1,4 @@
+import sys
 import traceback
 from discord import Interaction, Embed
 
@@ -8,6 +9,7 @@ async def send_log(
     interaction: Interaction,
     embed: Embed
 ) -> None:
+    
     guild = interaction.guild
     if not guild:
         return
@@ -37,6 +39,5 @@ async def send_log(
 
     except Exception:
         logging_manager.create_log(
-            'ERROR',
-            ''.join(traceback.format_exception(*traceback.sys.exc_info()))
+            'ERROR', traceback.format_exc()
         )

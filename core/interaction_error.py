@@ -16,8 +16,7 @@ class InteractionErrorHandler:
         )
 
         error_id = logging_manager.create_log(
-            'ERROR',
-            ''.join(traceback.format_exception(type(error), error, error.__traceback__))
+            'ERROR', traceback.format_exc()
         )
 
         if isinstance(error, TransformerError):
