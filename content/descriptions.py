@@ -8,7 +8,7 @@ DESCRIPTIONS = {
     "verification_logs_set": "Verification logs channel set to {}.",
     "verification_captcha_set": "Verification captcha set to **{}**.",
     "verification_panel": "Verification panel sent to {}.",
-    "case_deleted": "You have deleted this case.",
+    "case_deleted": "This case has been deleted.",
     "moderation_logs": "Moderation logs channel set to {}.",
     "moderation_purge": "Purged `{}` messages.",
     "ticket_already_open": "You already have an open ticket at <#{}>.",

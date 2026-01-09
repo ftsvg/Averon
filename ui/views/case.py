@@ -3,7 +3,6 @@ from discord import (
     Embed,
     Interaction,
     Member,
-    Message,
     TextStyle,
 )
 from discord.ui import Button, Modal, TextInput, View, button
@@ -34,29 +33,10 @@ class CaseView(View):
         custom_id="case_delete"
     )
     async def delete(self, interaction: Interaction, button: Button):
-        if not interaction.response.is_done():
-            await interaction.response.defer()
-
-        embed = create_embed(
-            author_name="Confirm",
-            description="Are you sure you want to delete this case?",
-            footer="You have 60 seconds to confirm"
+        await interaction.response.send_modal(
+            ConfirmCaseDeleteModal(self._case_id)
         )
 
-        view = ConfirmView(
-            self._interaction,
-            self._org_user,
-            self._case_id
-        )
-
-        msg = await interaction.followup.send(
-            embed=embed,
-            view=view,
-            ephemeral=True,
-            wait=True
-        )
-
-        view._message = msg
 
     @button(
         label="Edit reason",
@@ -80,67 +60,6 @@ class CaseView(View):
     async def on_timeout(self):
         self.clear_items()
         await self._interaction.edit_original_response(view=None)
-
-
-class ConfirmView(View):
-    def __init__(
-        self,
-        org_interaction: Interaction,
-        org_user: int,
-        case_id: str,
-        timeout: int = 60
-    ):
-        super().__init__(timeout=timeout)
-        self._interaction = org_interaction
-        self._org_user = org_user
-        self.case_id = case_id
-        self._message: Message | None = None
-
-    @button(
-        label="Confirm",
-        style=ButtonStyle.green,
-        custom_id="case_delete_confirm"
-    )
-    async def confirm(self, interaction: Interaction, button: Button):
-        if not interaction.response.is_done():
-            await interaction.response.defer()
-
-        logging_manager = LoggingManager(interaction.guild.id)
-
-        CaseManager(interaction.guild.id).delete_case(self.case_id)
-
-        logging_manager.create_log(
-            'INFO',
-            f"Case deleted: Case {self.case_id} deleted by "
-            f"{interaction.user} ({interaction.user.id})"
-        )
-
-        await self._message.delete()
-        self._message = None
-        self.stop()
-
-        await self._interaction.edit_original_response(
-            content=DESCRIPTIONS['case_deleted'],
-            embed=None,
-            view=None
-        )
-
-    @button(
-        label="Cancel",
-        style=ButtonStyle.gray,
-        custom_id="case_delete_cancel"
-    )
-    async def cancel(self, interaction: Interaction, button: Button):
-        if not interaction.response.is_done():
-            await interaction.response.defer()
-
-        await self._message.delete()
-        self._message = None
-        self.stop()
-
-    async def on_timeout(self):
-        if self._message:
-            await self._message.delete()
 
 
 class EditReasonModal(Modal, title="Edit case reason"):
@@ -245,6 +164,42 @@ class ConfirmCaseClearModal(Modal, title="Confirm"):
         await interaction.response.send_message(
             content=DESCRIPTIONS['cases_cleared'].format(deleted),
             ephemeral=True
+        )
+
+
+class ConfirmCaseDeleteModal(Modal, title="Confirm"):
+    confirm = TextInput(
+        label="Type 'confirm' to confirm",
+        placeholder="confirm",
+        style=TextStyle.short,
+        required=True,
+        min_length=7,
+        max_length=7
+    )
+
+    def __init__(self, case_id: str):
+        super().__init__()
+        self._case_id = case_id
+
+    async def on_submit(self, interaction: Interaction):
+        if str(self.confirm).lower() != 'confirm':
+            return await interaction.response.send_message(
+                content=ERRORS['confirm_error'],
+                ephemeral=True
+            )
+
+        logging_manager = LoggingManager(interaction.guild.id)
+
+        CaseManager(interaction.guild.id).delete_case(self._case_id)
+
+        logging_manager.create_log(
+            'INFO', f"Case deleted: Case {self._case_id} deleted by {interaction.user} ({interaction.user.id})"
+        )
+
+        await interaction.response.edit_message(
+            content=DESCRIPTIONS['case_deleted'],
+            embed=None,
+            view=None
         )
 
 
