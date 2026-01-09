@@ -6,6 +6,7 @@ import time
 from captcha.image import ImageCaptcha
 from discord import ButtonStyle, Client, File, Interaction, Message
 from discord.ui import Button, Modal, TextInput, View, button
+from gtts import gTTS
 
 from content import DESCRIPTIONS, ERRORS
 from database import VerificationSettings
@@ -98,14 +99,20 @@ class VerificationView(View):
             font_sizes=[60]
         )
         image.write(captcha_str, file_path)
-
         file = File(file_path, filename="captcha.jpg")
 
+        audio_path = f"./assets/captcha/{interaction.user.id}-captcha.mp3"
+
+        tts_text = " ".join(captcha_str)
+        tts = gTTS(text=f"{tts_text}", lang="en")
+        tts.save(audio_path)
+
         embed = create_embed(
-            title="Captcha",
+            author_name="Captcha",
             description=(
                 "You have `1 minute` to answer the captcha correctly.\n"
-                "The captcha will only contain **lowercase** letters and numbers."
+                "The captcha will only contain **lowercase** letters and numbers.\n\n"
+                "If you can't read the image, use the **Audio** button."
             ),
             image="attachment://captcha.jpg"
         )
@@ -124,7 +131,9 @@ class VerificationView(View):
             "expires": time.time() + 60,
             "role": role,
             "message": message,
-            "file_path": file_path
+            "guild_id": interaction.guild.id,
+            "file_path": file_path,
+            "audio_path": audio_path
         }
 
         logging_manager.create_log(
@@ -143,12 +152,29 @@ class CaptchaView(View):
     async def enter_code(self, interaction: Interaction, button: Button):
         await interaction.response.send_modal(CaptchaModal(self.user_id))
 
+
+    @button(label="Audio", style=ButtonStyle.gray)
+    async def audio(self, interaction: Interaction, button: Button):
+        session = captcha_sessions.get(self.user_id)           
+
+        audio_file = File(
+            session['audio_path'],
+            filename="captcha.mp3"
+        )
+
+        await interaction.response.send_message(
+            content="**Here is the audio version of the captcha.**\n-# This message will be deleted in 15 seconds.",
+            file=audio_file,
+            delete_after=15,
+            ephemeral=True,
+        )
+
     async def on_timeout(self):
         session = captcha_sessions.get(self.user_id)
         if not session:
             return
 
-        logging_manager = LoggingManager(session["message"].guild.id)
+        logging_manager = LoggingManager(session["guild_id"])
 
         message: Message = session["message"]
 
@@ -163,12 +189,12 @@ class CaptchaView(View):
         captcha_sessions.pop(self.user_id, None)
 
         logging_manager.create_log(
-            'INFO',
-            f"Captcha expired: verification captcha expired for user ID {self.user_id}"
+            'INFO', f"Captcha expired: verification captcha expired for user ID {self.user_id}"
         )
 
         try:
             os.remove(session["file_path"])
+            os.remove(session['audio_path'])
         except Exception:
             pass
 
@@ -198,6 +224,7 @@ class CaptchaModal(Modal, title="Captcha Verification"):
             captcha_sessions.pop(self.user_id, None)
             try:
                 os.remove(session["file_path"])
+                os.remove(session['audio_path'])
             except Exception:
                 pass
 
