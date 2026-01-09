@@ -117,4 +117,9 @@ COMMANDS = {
         "description": "Sends a verification panel to the specified channel",
         "channel": "The channel to send the panel to"
     },
+    "log": {
+        "name": "log",
+        "description": "View details about a log by id",
+        "log_id": "The log id to look up"
+    }    
 }

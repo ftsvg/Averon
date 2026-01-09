@@ -1,11 +1,11 @@
+import traceback
 from discord.ext import commands
 from discord import app_commands, Interaction, Object
 
 from core import check_permissions, send_log
 from ui import create_embed
-from logger import logger
 from content import COMMANDS, ERRORS
-from database.handlers import CaseManager
+from database.handlers import CaseManager, LoggingManager
 
 
 class Unban(commands.Cog):
@@ -30,14 +30,25 @@ class Unban(commands.Cog):
         if not interaction.response.is_done():
             await interaction.response.defer()
 
+        logging_manager = LoggingManager(interaction.guild.id)
+
         if error_key := await check_permissions(interaction, "ban"):
+            logging_manager.create_log(
+                'WARNING',
+                f"Permission denied: {interaction.user} ({interaction.user.id}) attempted to unban user ID {user_id}"
+            )
             return await interaction.edit_original_response(
-                content = ERRORS[error_key]
+                content=ERRORS[error_key]
             )
 
         if not user_id.isdigit():
+            error_id = logging_manager.create_log(
+                'ERROR',
+                f"Invalid user ID supplied for unban: '{user_id}' "
+                f"(requested by {interaction.user} ({interaction.user.id}))"
+            )
             return await interaction.edit_original_response(
-                content=ERRORS['invalid_user_id_error']
+                content=f"{ERRORS['invalid_user_id_error']}"
             )
 
         guild = interaction.guild
@@ -47,8 +58,12 @@ class Unban(commands.Cog):
             await guild.unban(user, reason=reason)
 
         except Exception:
+            error_id = logging_manager.create_log(
+                'ERROR',
+                traceback.format_exc()
+            )
             return await interaction.edit_original_response(
-                content=ERRORS['user_not_banned_error']
+                content=f"{ERRORS['user_not_banned_error']}\n-# log id: {error_id}"
             )
 
         manager = CaseManager(guild.id)
@@ -60,25 +75,26 @@ class Unban(commands.Cog):
             reason=reason
         )
 
-        logger.info(
-            f"{interaction.user.name} unbanned {user.id} from {guild.name} - Case #{case_id}"
+        logging_manager.create_log(
+            'INFO',
+            f"Unban executed: {interaction.user} ({interaction.user.id}) unbanned "
+            f"user ID {user.id} in {guild.name} (Case ID: {case_id})"
         )
 
-        msg = f"`[{case_id}]` **{user_id}** has been unbanned"
-
+        message = f"`[{case_id}]` **{user.id}** has been unbanned"
         if reason:
-            msg += f" for **{reason}**"
+            message += f" for **{reason}**"
 
         await interaction.edit_original_response(
-            content=msg
+            content=message
         )
 
         embed = create_embed(
             author_name=f"unban [{case_id}]",
             fields=[
-                ("user id", f"`{user.id}`", True),
-                ("moderator", f"{interaction.user.name} `{interaction.user.id}`", True),
-                ("reason", reason or "Not given.", False)
+                ("User ID", f"`{user.id}`", True),
+                ("Moderator", f"{interaction.user.name} `{interaction.user.id}`", True),
+                ("Reason", reason or "Not given.", False)
             ]
         )
 

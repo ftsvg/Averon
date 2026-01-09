@@ -1,5 +1,14 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Literal
+
+
+LogLevel = Literal[
+    'DEBUG', 
+    'INFO', 
+    'WARNING', 
+    'ERROR', 
+    'CRITICAL'
+]
 
 
 @dataclass(slots=True)
@@ -42,3 +51,13 @@ class VerificationSettings:
     role_id: Optional[int]
     logs_channel_id: Optional[int]
     captcha_enabled: bool
+
+
+@dataclass(slots=True)
+class LogEntry:
+    id: Optional[int]
+    guild_id: int
+    log_id: str
+    log_level: LogLevel
+    log_description: str
+    created_at: int

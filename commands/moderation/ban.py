@@ -1,11 +1,11 @@
+import traceback
 from discord.ext import commands
 from discord import app_commands, Interaction, Member, Forbidden, HTTPException
 
 from core import check_permissions, check_action_allowed, send_log, send_mod_dm
 from ui import create_embed
-from logger import logger
 from content import COMMANDS, ERRORS
-from database.handlers import CaseManager
+from database.handlers import CaseManager, LoggingManager
 
 
 class Ban(commands.Cog):
@@ -30,20 +30,31 @@ class Ban(commands.Cog):
         if not interaction.response.is_done():
             await interaction.response.defer()
 
+        logging_manager = LoggingManager(interaction.guild.id)
+
         if error_key := (
             await check_permissions(interaction, "ban")
             or await check_action_allowed(interaction, member, "ban")
         ):
+            logging_manager.create_log(
+                'WARNING',
+                f"Permission denied: {interaction.user} ({interaction.user.id}) attempted to ban "
+                f"{member} ({member.id})"
+            )
             return await interaction.edit_original_response(
-                content = ERRORS[error_key]
-            )                
+                content=ERRORS[error_key]
+            )
 
         try:
             await member.ban(reason=reason)
 
         except (Forbidden, HTTPException):
+            error_id = logging_manager.create_log(
+                'ERROR',
+                traceback.format_exc()
+            )
             return await interaction.edit_original_response(
-                content=ERRORS['interaction_error']
+                content=f"{ERRORS['interaction_error']}\n-# log id: {error_id}"
             )
 
         user = await interaction.client.fetch_user(member.id)
@@ -56,25 +67,27 @@ class Ban(commands.Cog):
             reason=reason
         )
 
-        logger.info(
-            f"{interaction.user.name} banned {member.name} from {interaction.guild.name} - Case #{case_id}"
+        logging_manager.create_log(
+            'INFO',
+            f"Ban executed: {interaction.user} ({interaction.user.id}) banned "
+            f"{member} ({member.id}) in {interaction.guild.name} "
+            f"(Case ID: {case_id})"
         )
 
-        msg = f"`[{case_id}]` **{member.name}** has been banned"
-
+        message = f"`[{case_id}]` **{member.name}** has been banned"
         if reason:
-            msg += f" for **{reason}**"
+            message += f" for **{reason}**"
 
         await interaction.edit_original_response(
-            content=msg
+            content=message
         )
 
         embed = create_embed(
             author_name=f"ban [{case_id}]",
             fields=[
-                ("user", f"{member.name} `{member.id}`", True),
-                ("moderator", f"{interaction.user.name} `{interaction.user.id}`", True),
-                ("reason", f"{reason if reason else 'Not given.'}", False)
+                ("User", f"{member.name} `{member.id}`", True),
+                ("Moderator", f"{interaction.user.name} `{interaction.user.id}`", True),
+                ("Reason", reason if reason else "Not given.", False)
             ],
             timestamp=True
         )

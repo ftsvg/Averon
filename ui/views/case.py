@@ -1,17 +1,18 @@
+import traceback
 from discord import Interaction, ButtonStyle, Message, TextStyle, Member, Embed
 from discord.ui import View, button, Button, Modal, TextInput
 
 from ui import create_embed
 from core.utils import format_duration
 from content import ERRORS, DESCRIPTIONS
-from database.handlers import CaseManager
+from database.handlers import CaseManager, LoggingManager
 from database import Case
 
 
 class CaseView(View):
     def __init__(
-        self, 
-        org_interaction: Interaction, 
+        self,
+        org_interaction: Interaction,
         org_user: int,
         case_id: str,
         timeout: int = 300
@@ -51,7 +52,6 @@ class CaseView(View):
 
         view._message = msg
 
-
     @button(
         label="Edit reason",
         style=ButtonStyle.gray,
@@ -60,22 +60,20 @@ class CaseView(View):
     async def edit_reason(self, interaction: Interaction, button: Button):
         await interaction.response.send_modal(
             EditReasonModal(
-                self._interaction, self._case_id, self
+                self._interaction,
+                self._case_id,
+                self
             )
         )
 
     async def interaction_check(self, interaction: Interaction):
         if self._org_user == 0:
             return True
-        
-        if interaction.user.id != self._org_user:
-            return False
-
-        return True
+        return interaction.user.id == self._org_user
 
     async def on_timeout(self):
         self.clear_items()
-        await self._interaction.edit_original_response(view=None)    
+        await self._interaction.edit_original_response(view=None)
 
 
 class ConfirmView(View):
@@ -97,22 +95,28 @@ class ConfirmView(View):
         style=ButtonStyle.green,
         custom_id="case_delete_confirm"
     )
-    async def confirm(
-        self,
-        interaction: Interaction,
-        button: Button
-    ):
+    async def confirm(self, interaction: Interaction, button: Button):
         if not interaction.response.is_done():
             await interaction.response.defer()
 
+        logging_manager = LoggingManager(interaction.guild.id)
+
         CaseManager(interaction.guild.id).delete_case(self.case_id)
+
+        logging_manager.create_log(
+            'INFO',
+            f"Case deleted: Case {self.case_id} deleted by "
+            f"{interaction.user} ({interaction.user.id})"
+        )
+
         await self._message.delete()
         self._message = None
         self.stop()
 
         await self._interaction.edit_original_response(
             content=DESCRIPTIONS['case_deleted'],
-            embed=None, view=None
+            embed=None,
+            view=None
         )
 
     @button(
@@ -120,11 +124,7 @@ class ConfirmView(View):
         style=ButtonStyle.gray,
         custom_id="case_delete_cancel"
     )
-    async def cancel(
-        self,
-        interaction: Interaction,
-        button: Button
-    ):
+    async def cancel(self, interaction: Interaction, button: Button):
         if not interaction.response.is_done():
             await interaction.response.defer()
 
@@ -135,7 +135,7 @@ class ConfirmView(View):
     async def on_timeout(self):
         if self._message:
             await self._message.delete()
-            
+
 
 class EditReasonModal(Modal, title="Edit case reason"):
     reason = TextInput(
@@ -147,9 +147,9 @@ class EditReasonModal(Modal, title="Edit case reason"):
     )
 
     def __init__(
-        self, 
+        self,
         interaction: Interaction,
-        case_id: str, 
+        case_id: str,
         view: View
     ):
         super().__init__()
@@ -160,24 +160,35 @@ class EditReasonModal(Modal, title="Edit case reason"):
     async def on_submit(self, interaction: Interaction):
         new_reason = str(self.reason).strip()
 
-        CaseManager(self._interaction.guild.id).update_reason(self._case_id, new_reason)
+        logging_manager = LoggingManager(interaction.guild.id)
+
+        CaseManager(self._interaction.guild.id).update_reason(
+            self._case_id,
+            new_reason
+        )
+
+        logging_manager.create_log(
+            'INFO',
+            f"Case updated: Reason updated for case {self._case_id} by "
+            f"{interaction.user} ({interaction.user.id})"
+        )
 
         manager = CaseManager(interaction.guild.id)
-        case = manager.get_case(self._case_id)  
+        case = manager.get_case(self._case_id)
 
-        guild = self._interaction.guild    
+        guild = self._interaction.guild
         user = guild.get_member(case.user_id)
-        moderator = guild.get_member(case.moderator_id)
+        moderator = guild.get_member(case.moderator_id) if case.moderator_id else None
 
         fields = [
-            ("user", f"{user.name if user else 'Unknown User'} `{case.user_id}`", True),
-            ("moderator", f"{moderator.name if moderator else 'System'} `{case.moderator_id}`" if case.moderator_id else "System", True),
+            ("User", f"{user.name if user else 'Unknown User'} `{case.user_id}`", True),
+            ("Moderator", f"{moderator.name if moderator else 'System'} `{case.moderator_id}`" if case.moderator_id else "System", True),
         ]
 
         if case.duration:
-            fields.append(("duration", f"{format_duration(case.duration)}", False))
+            fields.append(("Duration", format_duration(case.duration), False))
 
-        fields.append(("reason", case.reason, False))
+        fields.append(("Reason", case.reason, False))
 
         await self._interaction.edit_original_response(
             embed=create_embed(
@@ -203,24 +214,31 @@ class ConfirmCaseClearModal(Modal, title="Confirm"):
         max_length=7
     )
 
-    def __init__(
-        self, 
-        member_id: int, 
-    ):
+    def __init__(self, member_id: int):
         super().__init__()
         self._member_id = member_id
 
     async def on_submit(self, interaction: Interaction):
-        if not str(self.confirm).lower() == 'confirm':
+        if str(self.confirm).lower() != 'confirm':
             return await interaction.response.send_message(
-                content=ERRORS['confirm_error']
+                content=ERRORS['confirm_error'],
+                ephemeral=True
             )
-        
+
+        logging_manager = LoggingManager(interaction.guild.id)
+
         manager = CaseManager(interaction.guild.id)
         deleted = manager.clear_user_cases(self._member_id)
 
+        logging_manager.create_log(
+            'INFO',
+            f"Cases cleared: {deleted} cases for user ID {self._member_id} "
+            f"cleared by {interaction.user} ({interaction.user.id})"
+        )
+
         await interaction.response.send_message(
-            content=DESCRIPTIONS['cases_cleared'].format(deleted)
+            content=DESCRIPTIONS['cases_cleared'].format(deleted),
+            ephemeral=True
         )
 
 
@@ -240,7 +258,7 @@ class CasePagination(View):
         self._member = member
         self._cases = cases
         self.header = header
-        self.page = 0   
+        self.page = 0
         self.per_page = 5
         self.max_page = (len(self._cases) - 1) // self.per_page
         self.update_buttons()
@@ -249,14 +267,10 @@ class CasePagination(View):
         start = self.page * self.per_page
         end = start + self.per_page
 
-        lines = []
-
-        for case in self._cases[start:end]:
-            created = f"<t:{case.created_at}:R>"
-
-            lines.append(
-                f"> {case.type} `[{case.case_id}]` - {created}"
-            )
+        lines = [
+            f"> {case.type} `[{case.case_id}]` - <t:{case.created_at}:R>"
+            for case in self._cases[start:end]
+        ]
 
         return create_embed(
             author_name="Case history",
@@ -267,7 +281,6 @@ class CasePagination(View):
     def update_buttons(self):
         self.prev_page.disabled = self.page == 0
         self.next_page.disabled = self.page >= self.max_page
-
 
     @button(label="Previous", style=ButtonStyle.gray)
     async def prev_page(self, interaction: Interaction, button: Button):
@@ -292,5 +305,4 @@ class CasePagination(View):
 
     async def on_timeout(self):
         self.clear_items()
-        await self._interaction.edit_original_response(view=None)        
-
+        await self._interaction.edit_original_response(view=None)

@@ -9,7 +9,11 @@ from discord import (
 )
 from discord.ui import View, button, Button, Modal, TextInput
 
-from database.handlers import TicketManager, TicketSettingsManager
+from database.handlers import (
+    TicketManager,
+    TicketSettingsManager,
+    LoggingManager
+)
 from database import Ticket, TicketSettings
 from ui import create_embed
 from content import ERRORS, DESCRIPTIONS
@@ -23,10 +27,17 @@ class TicketsView(View):
 
     @button(label="Create ticket", style=ButtonStyle.gray, custom_id="create_ticket")
     async def create(self, interaction: Interaction, button: Button):
-        manager = TicketManager(interaction.guild.id)
+        logging_manager = LoggingManager(interaction.guild.id)
 
+        manager = TicketManager(interaction.guild.id)
         ticket: Ticket = manager.get_ticket_by_user(interaction.user.id)
+
         if ticket:
+            logging_manager.create_log(
+                'INFO',
+                f"Ticket creation blocked: {interaction.user} ({interaction.user.id}) "
+                f"already has open ticket {ticket.channel_id}"
+            )
             return await interaction.response.send_message(
                 content=DESCRIPTIONS['ticket_already_open'].format(ticket.channel_id),
                 ephemeral=True
@@ -54,6 +65,7 @@ class TicketReasonView(Modal, title="Support ticket"):
             await interaction.response.defer(ephemeral=True)
 
         guild_id = interaction.guild.id
+        logging_manager = LoggingManager(guild_id)
 
         manager = TicketManager(guild_id)
         settings: TicketSettings = TicketSettingsManager(guild_id).get_settings()
@@ -64,6 +76,11 @@ class TicketReasonView(Modal, title="Support ticket"):
             or settings.ticket_channel_id is None
             or settings.transcripts_channel_id is None
         ):
+            logging_manager.create_log(
+                'ERROR',
+                f"Ticket creation failed: ticket system not configured "
+                f"(requested by {interaction.user} ({interaction.user.id}))"
+            )
             return await interaction.followup.send(
                 content=ERRORS['ticket_config_not_set_error'],
                 ephemeral=True
@@ -91,10 +108,10 @@ class TicketReasonView(Modal, title="Support ticket"):
                     "Please provide any additional details if needed."
                 ),
                 fields=[
-                    ("user", f"{interaction.user.name} `{interaction.user.id}`", False),
-                    ("reason", self.reason.value, False)
+                    ("User", f"{interaction.user.name} `{interaction.user.id}`", False),
+                    ("Reason", self.reason.value, False)
                 ],
-                thumbnail=interaction.user.display_avatar.url if interaction.user.display_avatar.url else None
+                thumbnail=interaction.user.display_avatar.url if interaction.user.display_avatar else None
             ),
             view=CloseTicketView(self.client)
         )
@@ -103,6 +120,12 @@ class TicketReasonView(Modal, title="Support ticket"):
             interaction.user.id,
             thread.id,
             self.reason.value
+        )
+
+        logging_manager.create_log(
+            'INFO',
+            f"Ticket created: {interaction.user} ({interaction.user.id}) "
+            f"opened ticket {thread.id}"
         )
 
         await interaction.followup.send(
@@ -121,9 +144,16 @@ class CloseTicketView(View):
         if not interaction.response.is_done():
             await interaction.response.defer(ephemeral=True)
 
+        logging_manager = LoggingManager(interaction.guild.id)
+
         if error_key := await check_permissions(interaction, "other"):
+            logging_manager.create_log(
+                'WARNING',
+                f"Permission denied: {interaction.user} ({interaction.user.id}) attempted to close "
+                f"ticket {interaction.channel.id}"
+            )
             return await interaction.followup.send(
-                content = ERRORS[error_key],
+                content=ERRORS[error_key],
                 ephemeral=True
             )
 
@@ -137,6 +167,12 @@ class CloseTicketView(View):
             interaction.user.id
         )
 
+        logging_manager.create_log(
+            'INFO',
+            f"Ticket closed: Ticket {interaction.channel.id} closed by "
+            f"{interaction.user} ({interaction.user.id})"
+        )
+
         user = interaction.guild.get_member(ticket_details.user_id)
         settings: TicketSettings = TicketSettingsManager(guild_id).get_settings()
         transcript_channel = interaction.guild.get_channel(settings.transcripts_channel_id)
@@ -144,20 +180,21 @@ class CloseTicketView(View):
         embed = create_embed(
             author_name="Transcript",
             fields=[
-                ("ticket", f"{interaction.channel.name} `{interaction.channel.id}`", False),
-                ("ticket reason", ticket_details.reason, False),
-                ("created at", f"<t:{ticket_details.created_at}:R>", False),
-                ("user", f"{user.name} `{user.id}`", False),
-                ("closed by", f"{interaction.user.name} `{interaction.user.id}`", False)
+                ("Ticket", f"{interaction.channel.name} `{interaction.channel.id}`", False),
+                ("Reason", ticket_details.reason, False),
+                ("Created At", f"<t:{ticket_details.created_at}:R>", False),
+                ("User", f"{user.name} `{user.id}`", False),
+                ("Closed By", f"{interaction.user.name} `{interaction.user.id}`", False)
             ],
-            thumbnail=user.display_avatar.url if user.display_avatar.url else None
+            thumbnail=user.display_avatar.url if user and user.display_avatar else None
         )
 
         if transcript_channel:
             await transcript_channel.send(embed=embed)
 
         await interaction.followup.send(
-            content=DESCRIPTIONS['ticket_closed'].format(interaction.user.name)
+            content=DESCRIPTIONS['ticket_closed'].format(interaction.user.name),
+            ephemeral=True
         )
 
         await asyncio.sleep(1)

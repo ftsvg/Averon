@@ -27,4 +27,5 @@ ERRORS = {
     "already_verifying_error": "You are already verifying. Please complete that verification to verify again.",
     "captcha_expired_error": "You took too long to respond. Please try again.",
     "invalid_captcha_code_error": "The captcha you entered was incorrect. Please try again.",
+    "error_not_found": "Error not found.",
 }

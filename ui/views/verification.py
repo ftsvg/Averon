@@ -2,15 +2,14 @@ import time
 import os
 import secrets
 import string
-from discord import Client, Interaction, ButtonStyle, File, Message 
+from discord import Client, Interaction, ButtonStyle, File, Message
 from captcha.image import ImageCaptcha
 from discord.ui import View, button, Button, Modal, TextInput
 
-from database.handlers import VerificationManager
+from database.handlers import VerificationManager, LoggingManager
 from database import VerificationSettings
 from ui import create_embed
 from content import ERRORS, DESCRIPTIONS
-
 
 
 verifying = set()
@@ -26,10 +25,17 @@ class VerificationView(View):
     async def verify(self, interaction: Interaction, button: Button):
         await interaction.response.defer(ephemeral=True)
 
+        logging_manager = LoggingManager(interaction.guild.id)
+
         manager = VerificationManager(interaction.guild.id)
         settings: VerificationSettings = manager.get_settings()
 
         if not settings or not settings.role_id or not settings.logs_channel_id:
+            logging_manager.create_log(
+                'ERROR',
+                f"Verification failed: verification not configured "
+                f"(requested by {interaction.user} ({interaction.user.id}))"
+            )
             return await interaction.followup.send(
                 content=ERRORS['verification_config_not_set_error'],
                 ephemeral=True
@@ -38,12 +44,21 @@ class VerificationView(View):
         role = interaction.guild.get_role(settings.role_id)
 
         if role is None:
+            logging_manager.create_log(
+                'ERROR',
+                f"Verification failed: configured verification role missing "
+                f"(requested by {interaction.user} ({interaction.user.id}))"
+            )
             return await interaction.followup.send(
                 content=ERRORS['verification_role_error'],
                 ephemeral=True
             )
 
         if role in interaction.user.roles:
+            logging_manager.create_log(
+                'INFO',
+                f"Verification skipped: {interaction.user} ({interaction.user.id}) already verified"
+            )
             return await interaction.followup.send(
                 content=ERRORS['already_verified_error'],
                 ephemeral=True
@@ -51,6 +66,10 @@ class VerificationView(View):
 
         if not settings.captcha_enabled:
             await interaction.user.add_roles(role)
+            logging_manager.create_log(
+                'INFO',
+                f"Verification completed: {interaction.user} ({interaction.user.id}) verified without captcha"
+            )
             return await interaction.followup.send(
                 content=DESCRIPTIONS['verification_success'],
                 ephemeral=True
@@ -107,6 +126,12 @@ class VerificationView(View):
             "file_path": file_path
         }
 
+        logging_manager.create_log(
+            'INFO',
+            f"Captcha started: verification captcha issued for "
+            f"{interaction.user} ({interaction.user.id})"
+        )
+
 
 class CaptchaView(View):
     def __init__(self, user_id: int):
@@ -122,15 +147,24 @@ class CaptchaView(View):
         if not session:
             return
 
+        logging_manager = LoggingManager(session["message"].guild.id)
+
         message: Message = session["message"]
 
         await message.edit(
             content=ERRORS['captcha_expired_error'],
-            embed=None, view=None, attachments=[]
+            embed=None,
+            view=None,
+            attachments=[]
         )
 
         verifying.discard(self.user_id)
         captcha_sessions.pop(self.user_id, None)
+
+        logging_manager.create_log(
+            'INFO',
+            f"Captcha expired: verification captcha expired for user ID {self.user_id}"
+        )
 
         try:
             os.remove(session["file_path"])
@@ -156,6 +190,8 @@ class CaptchaModal(Modal, title="Captcha Verification"):
         session = captcha_sessions.get(self.user_id)
         message: Message = session["message"]
 
+        logging_manager = LoggingManager(interaction.guild.id)
+
         def cleanup():
             verifying.discard(self.user_id)
             captcha_sessions.pop(self.user_id, None)
@@ -166,15 +202,30 @@ class CaptchaModal(Modal, title="Captcha Verification"):
 
         if self.captcha_input.value != session["answer"]:
             cleanup()
+            logging_manager.create_log(
+                'WARNING',
+                f"Captcha failed: invalid captcha entered by "
+                f"{interaction.user} ({interaction.user.id})"
+            )
             return await message.edit(
                 content=ERRORS['invalid_captcha_code_error'],
-                embed=None, view=None, attachments=[]
+                embed=None,
+                view=None,
+                attachments=[]
             )
 
         await interaction.user.add_roles(session["role"])
         cleanup()
 
+        logging_manager.create_log(
+            'INFO',
+            f"Verification completed: {interaction.user} ({interaction.user.id}) "
+            f"successfully verified via captcha"
+        )
+
         await message.edit(
             content=DESCRIPTIONS['verification_success'],
-            embed=None, view=None, attachments=[]
+            embed=None,
+            view=None,
+            attachments=[]
         )

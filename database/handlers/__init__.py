@@ -3,6 +3,7 @@ from .moderation import ModerationManager
 from .ticket import TicketManager
 from .ticket_settings import TicketSettingsManager
 from .verification import VerificationManager
+from .logging import LoggingManager
 
 
 __all__ = [ 
@@ -10,5 +11,6 @@ __all__ = [
     'ModerationManager',
     'TicketManager',
     'TicketSettingsManager', 
-    VerificationManager
+    'VerificationManager',
+    'LoggingManager'
 ]

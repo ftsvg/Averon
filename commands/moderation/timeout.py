@@ -1,12 +1,12 @@
+import traceback
+from datetime import datetime, timedelta, timezone
 from discord.ext import commands
 from discord import app_commands, Interaction, Member, Forbidden, HTTPException
-from datetime import datetime, timedelta, timezone
 
 from core import check_permissions, check_action_allowed, send_log, send_mod_dm
 from ui import create_embed
-from logger import logger
 from content import COMMANDS, ERRORS
-from database.handlers import CaseManager
+from database.handlers import CaseManager, LoggingManager
 
 
 TIMEOUT_DURATIONS = {
@@ -22,6 +22,7 @@ TIMEOUT_DURATIONS = {
 class Timeout(commands.Cog):
     def __init__(self, client: commands.Bot) -> None:
         self.client = client
+
 
     @app_commands.command(
         name=COMMANDS["timeout"]["name"],
@@ -48,23 +49,40 @@ class Timeout(commands.Cog):
         if not interaction.response.is_done():
             await interaction.response.defer()
 
+        logging_manager = LoggingManager(interaction.guild.id)
+
         if error_key := (
             await check_permissions(interaction, "timeout")
             or await check_action_allowed(interaction, member, "timeout")
         ):
+            logging_manager.create_log(
+                'WARNING',
+                f"Permission denied: {interaction.user} ({interaction.user.id}) attempted to timeout "
+                f"{member} ({member.id})"
+            )
             return await interaction.edit_original_response(
-                content = ERRORS[error_key]
+                content=ERRORS[error_key]
             )
 
         if member.is_timed_out():
+            logging_manager.create_log(
+                'INFO',
+                f"Timeout skipped: {member} ({member.id}) is already timed out "
+                f"(requested by {interaction.user} ({interaction.user.id}))"
+            )
             return await interaction.edit_original_response(
                 content=ERRORS['already_timed_out'].format(member.name)
             )
 
         delta = TIMEOUT_DURATIONS.get(duration.value)
         if not delta:
+            error_id = logging_manager.create_log(
+                'ERROR',
+                f"Invalid timeout duration '{duration.value}' "
+                f"(requested by {interaction.user} ({interaction.user.id}))"
+            )
             return await interaction.edit_original_response(
-                content=ERRORS['interaction_error']
+                content=f"{ERRORS['interaction_error']}\n-# log id: {error_id}"
             )
 
         until = datetime.now(timezone.utc) + delta
@@ -72,10 +90,14 @@ class Timeout(commands.Cog):
 
         try:
             await member.timeout(until, reason=reason)
-            
+
         except (Forbidden, HTTPException):
+            error_id = logging_manager.create_log(
+                'ERROR',
+                traceback.format_exc()
+            )
             return await interaction.edit_original_response(
-                content=ERRORS['interaction_error']
+                content=f"{ERRORS['interaction_error']}\n-# log id: {error_id}"
             )
 
         manager = CaseManager(interaction.guild.id)
@@ -88,26 +110,29 @@ class Timeout(commands.Cog):
             duration=duration_seconds
         )
 
-        logger.info(
-            f"{interaction.user.name} timed out {member} for {duration.name} - Case #{case_id}"
+        logging_manager.create_log(
+            'INFO',
+            f"Timeout executed: {interaction.user} ({interaction.user.id}) timed out "
+            f"{member} ({member.id}) for {duration.name} "
+            f"in {interaction.guild.name} (Case ID: {case_id})"
         )
 
-        msg = f"`[{case_id}]` **{member}** has been timed out for `{duration.name}`"
+        message = f"`[{case_id}]` **{member.name}** has been timed out for `{duration.name}`"
         if reason:
-            msg += f"\n**Reason:** {reason}"
+            message += f"\n**Reason:** {reason}"
 
         await interaction.edit_original_response(
-            content=msg
+            content=message
         )
 
         embed = create_embed(
             author_name=f"timeout [{case_id}]",
             fields=[
-                ("user", f"{member} `{member.id}`", True),
-                ("moderator", f"{interaction.user.name} `{interaction.user.id}`", True),
-                ("duration", duration.name, False),
-                ("reason", reason or "Not given.", False)
-            ]            
+                ("User", f"{member.name} `{member.id}`", True),
+                ("Moderator", f"{interaction.user.name} `{interaction.user.id}`", True),
+                ("Duration", duration.name, False),
+                ("Reason", reason or "Not given.", False)
+            ]
         )
 
         await send_log(interaction, embed)

@@ -3,18 +3,29 @@ from discord import Interaction, NotFound
 from discord.app_commands import TransformerError
 
 from content import ERRORS
+from database.handlers import LoggingManager
 
 
 class InteractionErrorHandler:
     @staticmethod
     async def handle(interaction: Interaction, error: Exception) -> None:
         error = getattr(error, "original", error)
-        traceback.print_exception(error)
+
+        logging_manager = LoggingManager(
+            interaction.guild.id if interaction.guild else 0
+        )
+
+        error_id = logging_manager.create_log(
+            'ERROR',
+            ''.join(traceback.format_exception(type(error), error, error.__traceback__))
+        )
 
         if isinstance(error, TransformerError):
             msg = ERRORS["invalid_user"]
         else:
             msg = ERRORS["interaction_error"]
+
+        msg = f"{msg}\n-# log id: {error_id}"
 
         try:
             if interaction.response.is_done():

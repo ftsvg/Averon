@@ -1,14 +1,8 @@
 import time
-import string
-import secrets
 from typing import Optional
 
 from database import ensure_cursor, Cursor, Case
-
-
-def generate_case_id(length: int = 6) -> str:
-    chars = string.ascii_lowercase + string.digits
-    return ''.join(secrets.choice(chars) for _ in range(length))
+from core.utils import generate_id
 
 
 class CaseManager:
@@ -34,7 +28,7 @@ class CaseManager:
             return case_id
 
         while True:
-            new_case_id = generate_case_id()
+            new_case_id = generate_id()
             if not CaseManager._case_id_exists(
                 case_id=new_case_id,
                 cursor=cursor
