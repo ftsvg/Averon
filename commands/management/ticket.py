@@ -1,7 +1,7 @@
 from discord.ext import commands
 from discord import app_commands, Interaction, TextChannel, Role, Thread
 
-from core import check_permissions, send_transcript_log
+from core import check_permissions, send_transcript_log, send_user_dm
 from ui import create_embed
 from ui.views import TicketsView
 from content import COMMANDS, ERRORS, DESCRIPTIONS
@@ -255,6 +255,7 @@ class Tickets(commands.Cog):
         )
 
         await send_transcript_log(interaction, embed)
+        await send_user_dm(interaction, user, embed=embed)
 
         await channel.delete()
 

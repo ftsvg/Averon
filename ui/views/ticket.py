@@ -17,7 +17,7 @@ from database.handlers import (
 from database import Ticket, TicketSettings
 from ui import create_embed
 from content import ERRORS, DESCRIPTIONS
-from core import check_permissions, send_transcript_log
+from core import check_permissions, send_transcript_log, send_user_dm
 
 
 class TicketsView(View):
@@ -188,7 +188,8 @@ class CloseTicketView(View):
         )
 
         await send_transcript_log(interaction, embed)
-
+        await send_user_dm(interaction, user, embed=embed)
+        
         await interaction.followup.send(
             content=DESCRIPTIONS['ticket_closed'].format(interaction.user.name),
             ephemeral=True

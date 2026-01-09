@@ -1,45 +1,21 @@
-from discord import Member, User, Forbidden, HTTPException
-from logger import logger
-from ui import create_embed
+import traceback
+from discord import Interaction, Member, User, Embed, Forbidden, HTTPException
+
+from database.handlers import LoggingManager
 
 
-_ACTION_PAST = {
-    "warn": "warned",
-    "ban": "banned",
-    "timeout": "timed out",
-    "kick": "kicked",
-    "softban": "softbanned"
-}
-
-
-async def send_mod_dm(
+async def send_user_dm(
+    interaction: Interaction,
     member: User | Member,
     *,
-    guild_name: str,
-    action: str,
-    case_id: str,
-    moderator: Member,
-    reason: str | None = None,
-    duration: str | None = None
+    content: str | None = None,
+    embed: Embed | None = None
 ) -> None:
-    
-    past_action = _ACTION_PAST.get(action, action)
-    content = f"You have been *{past_action}* in **{guild_name}**."
+    guild = interaction.guild
+    if not guild:
+        return
 
-    fields = [
-        ("user", f"{member.name} `{member.id}`", True),
-        ("moderator", f"{moderator.name} `{moderator.id}`", True),
-    ]
-
-    if duration:
-        fields.append(("duration", duration, False))
-
-    fields.append(("reason", reason or "Not given.", False))
-
-    embed = create_embed(
-        author_name=f"{action} [{case_id}]",
-        fields=fields
-    )
+    logging_manager = LoggingManager(guild.id)
 
     try:
         await member.send(
@@ -47,8 +23,18 @@ async def send_mod_dm(
             embed=embed
         )
 
+        logging_manager.create_log(
+            'INFO', f"DM sent to {member} ({member.id}) in guild {guild.id}"
+        )
+
     except (Forbidden, HTTPException):
+        logging_manager.create_log(
+            'WARNING', f"Failed to send DM to {member} ({member.id}) in guild {guild.id}: DMs disabled or blocked"
+        )
         return
 
-    except Exception as exc:
-        logger.error(f"Failed to send DM to user {member.id}: {exc}")
+    except Exception:
+        logging_manager.create_log(
+            'ERROR',
+            traceback.format_exc()
+        )

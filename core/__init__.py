@@ -2,7 +2,7 @@ from .constants import *
 from .interaction_error import InteractionErrorHandler
 from .checks import check_permissions, check_action_allowed
 from .send_log import send_moderation_log, send_transcript_log
-from .send_dm import send_mod_dm
+from .send_dm import send_user_dm
 
 
 __all__ = [
@@ -11,6 +11,6 @@ __all__ = [
     'check_permissions',
     'send_moderation_log',
     'send_transcript_log',
-    'send_mod_dm',
+    'send_user_dm',
     'check_ticket_config_permissions',
 ]
