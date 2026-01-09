@@ -4,11 +4,19 @@ import string
 import time
 
 from captcha.image import ImageCaptcha
-from discord import ButtonStyle, Client, File, Interaction, Message
+from discord import (
+    ButtonStyle, 
+    Client, 
+    File, 
+    Interaction, 
+    Message, 
+    Role
+)
 from discord.ui import Button, Modal, TextInput, View, button
 from gtts import gTTS
 
 from content import DESCRIPTIONS, ERRORS
+from core import send_verification_log
 from database import VerificationSettings
 from database.handlers import LoggingManager, VerificationManager
 from ui import create_embed
@@ -34,9 +42,7 @@ class VerificationView(View):
 
         if not settings or not settings.role_id or not settings.logs_channel_id:
             logging_manager.create_log(
-                'ERROR',
-                f"Verification failed: verification not configured "
-                f"(requested by {interaction.user} ({interaction.user.id}))"
+                'ERROR', f"Verification failed: verification not configured (requested by {interaction.user} ({interaction.user.id}))"
             )
             return await interaction.followup.send(
                 content=ERRORS['verification_config_not_set_error'],
@@ -47,9 +53,7 @@ class VerificationView(View):
 
         if role is None:
             logging_manager.create_log(
-                'ERROR',
-                f"Verification failed: configured verification role missing "
-                f"(requested by {interaction.user} ({interaction.user.id}))"
+                'ERROR', f"Verification failed: configured verification role missing (requested by {interaction.user} ({interaction.user.id}))"
             )
             return await interaction.followup.send(
                 content=ERRORS['verification_role_error'],
@@ -58,8 +62,7 @@ class VerificationView(View):
 
         if role in interaction.user.roles:
             logging_manager.create_log(
-                'INFO',
-                f"Verification skipped: {interaction.user} ({interaction.user.id}) already verified"
+                'INFO', f"Verification skipped: {interaction.user} ({interaction.user.id}) already verified"
             )
             return await interaction.followup.send(
                 content=ERRORS['already_verified_error'],
@@ -69,9 +72,19 @@ class VerificationView(View):
         if not settings.captcha_enabled:
             await interaction.user.add_roles(role)
             logging_manager.create_log(
-                'INFO',
-                f"Verification completed: {interaction.user} ({interaction.user.id}) verified without captcha"
+                'INFO', f"Verification completed: {interaction.user} ({interaction.user.id}) verified without captcha"
             )
+
+            embed = create_embed(
+                author_name="verification",
+                fields=[
+                    ("user", f"{interaction.user.name} `{interaction.user.id}`", True),
+                    ("role added", f"{role.name} `{role.id}`", True)
+                ],
+                timestamp=True
+            )
+            await send_verification_log(interaction, embed)
+
             return await interaction.followup.send(
                 content=DESCRIPTIONS['verification_success'],
                 ephemeral=True
@@ -137,9 +150,7 @@ class VerificationView(View):
         }
 
         logging_manager.create_log(
-            'INFO',
-            f"Captcha started: verification captcha issued for "
-            f"{interaction.user} ({interaction.user.id})"
+            'INFO', f"Captcha started: verification captcha issued for {interaction.user} ({interaction.user.id})"
         )
 
 
@@ -202,7 +213,7 @@ class CaptchaView(View):
 class CaptchaModal(Modal, title="Captcha Verification"):
     captcha_input = TextInput(
         label="Enter the captcha",
-        placeholder="Type the letters and numbers shown in the image",
+        placeholder="Enter the letters and numbers shown in the image",
         required=True,
         max_length=6
     )
@@ -216,6 +227,7 @@ class CaptchaModal(Modal, title="Captcha Verification"):
 
         session = captcha_sessions.get(self.user_id)
         message: Message = session["message"]
+        role: Role = session["role"]
 
         logging_manager = LoggingManager(interaction.guild.id)
 
@@ -231,9 +243,7 @@ class CaptchaModal(Modal, title="Captcha Verification"):
         if self.captcha_input.value != session["answer"]:
             cleanup()
             logging_manager.create_log(
-                'WARNING',
-                f"Captcha failed: invalid captcha entered by "
-                f"{interaction.user} ({interaction.user.id})"
+                'WARNING', f"Captcha failed: invalid captcha entered by {interaction.user} ({interaction.user.id})"
             )
             return await message.edit(
                 content=ERRORS['invalid_captcha_code_error'],
@@ -242,13 +252,22 @@ class CaptchaModal(Modal, title="Captcha Verification"):
                 attachments=[]
             )
 
-        await interaction.user.add_roles(session["role"])
+        await interaction.user.add_roles(role)
+
+        embed = create_embed(
+            author_name="verification",
+            fields=[
+                ("user", f"{interaction.user.name} `{interaction.user.id}`", True),
+                ("role added", f"{role.name} `{role.id}`", True)
+            ],
+            timestamp=True
+        )
+        await send_verification_log(interaction, embed)
+
         cleanup()
 
         logging_manager.create_log(
-            'INFO',
-            f"Verification completed: {interaction.user} ({interaction.user.id}) "
-            f"successfully verified via captcha"
+            'INFO', f"Verification completed: {interaction.user} ({interaction.user.id}) successfully verified via captcha"
         )
 
         await message.edit(

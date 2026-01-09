@@ -2,8 +2,13 @@ import traceback
 
 from discord import Embed, Interaction
 
-from database import TicketSettings
-from database.handlers import LoggingManager, ModerationManager, TicketSettingsManager
+from database import TicketSettings, VerificationSettings
+from database.handlers import (
+    LoggingManager, 
+    ModerationManager, 
+    TicketSettingsManager, 
+    VerificationManager
+)
 
 
 
@@ -23,16 +28,14 @@ async def send_moderation_log(
 
     if not channel_id:
         logging_manager.create_log(
-            'WARNING',
-            f"Moderation log channel not configured for guild {guild.id}"
+            'WARNING', f"Moderation log channel not configured for guild {guild.id}"
         )
         return
 
     channel = guild.get_channel(channel_id)
     if not channel:
         logging_manager.create_log(
-            'ERROR',
-            f"Configured moderation log channel {channel_id} does not exist in guild {guild.id}"
+            'ERROR', f"Configured moderation log channel ({channel_id}) does not exist in guild {guild.id}"
         )
         return
 
@@ -62,16 +65,51 @@ async def send_transcript_log(
 
     if not channel_id:
         logging_manager.create_log(
-            'WARNING',
-            f"Transcript channel not configured for guild {guild.id}"
+            'WARNING', f"Transcript channel not configured for guild {guild.id}"
         )
         return
 
     channel = guild.get_channel(channel_id)
     if not channel:
         logging_manager.create_log(
-            'ERROR',
-            f"Transcript channel {channel_id} does not exist in guild {guild.id}"
+            'ERROR', f"Transcript channel ({channel_id}) does not exist in guild {guild.id}"
+        )
+        return
+
+    try:
+        await channel.send(embed=embed)
+
+    except Exception:
+        logging_manager.create_log(
+            'ERROR', traceback.format_exc()
+        )
+
+
+async def send_verification_log(
+    interaction: Interaction,
+    embed: Embed
+) -> None:
+    
+    guild = interaction.guild
+    if not guild:
+        return
+
+    logging_manager = LoggingManager(guild.id)
+
+    settings: VerificationSettings = VerificationManager(guild.id).get_settings()
+
+    channel_id = settings.logs_channel_id
+
+    if not channel_id:
+        logging_manager.create_log(
+            'WARNING', f"Verification logs channel not configured for guild {guild.id}"
+        )
+        return
+
+    channel = guild.get_channel(channel_id)
+    if not channel:
+        logging_manager.create_log(
+            'ERROR', f"Verification logs channel ({channel_id}) does not exist in guild {guild.id}"
         )
         return
 
