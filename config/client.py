@@ -5,7 +5,7 @@ from discord.ext import commands
 
 from core import InteractionErrorHandler
 from logger import logger
-from ui.views import CloseTicketView, TicketsView, VerificationView
+from ui.views import TicketCloseButton, TicketsView, VerificationView
 
 
 intents = Intents.all()
@@ -35,7 +35,7 @@ class Client(commands.AutoShardedBot):
         
         
         self.add_view(TicketsView(self))
-        self.add_view(CloseTicketView(self))
+        self.add_view(TicketCloseButton(self))
         self.add_view(VerificationView(self))
 
         self.tree.on_error = self.on_app_command_error

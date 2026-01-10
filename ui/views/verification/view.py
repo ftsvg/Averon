@@ -1,4 +1,3 @@
-import os
 import secrets
 import string
 import time
@@ -9,10 +8,8 @@ from discord import (
     Client, 
     File, 
     Interaction, 
-    Message, 
-    Role
 )
-from discord.ui import Button, Modal, TextInput, View, button
+from discord.ui import Button, View, button
 from gtts import gTTS
 
 from content import DESCRIPTIONS, ERRORS
@@ -20,6 +17,7 @@ from core import send_verification_log
 from database import VerificationSettings
 from database.handlers import LoggingManager, VerificationManager
 from ui import create_embed
+from .captcha import CaptchaView
 
 
 verifying = set()
@@ -130,7 +128,11 @@ class VerificationView(View):
             image="attachment://captcha.jpg"
         )
 
-        view = CaptchaView(interaction.user.id)
+        view = CaptchaView(
+            interaction.user.id,
+            captcha_sessions,
+            verifying
+        )
 
         message = await interaction.followup.send(
             embed=embed,
@@ -151,128 +153,4 @@ class VerificationView(View):
 
         logging_manager.create_log(
             'INFO', f"Captcha started: verification captcha issued for {interaction.user} ({interaction.user.id})"
-        )
-
-
-class CaptchaView(View):
-    def __init__(self, user_id: int):
-        super().__init__(timeout=60)
-        self.user_id = user_id
-
-    @button(label="Enter Code", style=ButtonStyle.blurple)
-    async def enter_code(self, interaction: Interaction, button: Button):
-        await interaction.response.send_modal(CaptchaModal(self.user_id))
-
-
-    @button(label="Audio", style=ButtonStyle.gray)
-    async def audio(self, interaction: Interaction, button: Button):
-        session = captcha_sessions.get(self.user_id)           
-
-        audio_file = File(
-            session['audio_path'],
-            filename="captcha.mp3"
-        )
-
-        await interaction.response.send_message(
-            content="**Here is the audio version of the captcha.**\n-# This message will be deleted in 15 seconds.",
-            file=audio_file,
-            delete_after=15,
-            ephemeral=True,
-        )
-
-    async def on_timeout(self):
-        session = captcha_sessions.get(self.user_id)
-        if not session:
-            return
-
-        logging_manager = LoggingManager(session["guild_id"])
-
-        message: Message = session["message"]
-
-        await message.edit(
-            content=ERRORS['captcha_expired_error'],
-            embed=None,
-            view=None,
-            attachments=[]
-        )
-
-        verifying.discard(self.user_id)
-        captcha_sessions.pop(self.user_id, None)
-
-        logging_manager.create_log(
-            'INFO', f"Captcha expired: verification captcha expired for user ID {self.user_id}"
-        )
-
-        try:
-            os.remove(session["file_path"])
-            os.remove(session['audio_path'])
-        except Exception:
-            pass
-
-
-class CaptchaModal(Modal, title="Captcha Verification"):
-    captcha_input = TextInput(
-        label="Enter the captcha",
-        placeholder="Enter the letters and numbers shown in the image",
-        required=True,
-        max_length=6
-    )
-
-    def __init__(self, user_id: int):
-        super().__init__()
-        self.user_id = user_id
-
-    async def on_submit(self, interaction: Interaction):
-        await interaction.response.defer()
-
-        session = captcha_sessions.get(self.user_id)
-        message: Message = session["message"]
-        role: Role = session["role"]
-
-        logging_manager = LoggingManager(interaction.guild.id)
-
-        def cleanup():
-            verifying.discard(self.user_id)
-            captcha_sessions.pop(self.user_id, None)
-            try:
-                os.remove(session["file_path"])
-                os.remove(session['audio_path'])
-            except Exception:
-                pass
-
-        if self.captcha_input.value != session["answer"]:
-            cleanup()
-            logging_manager.create_log(
-                'WARNING', f"Captcha failed: invalid captcha entered by {interaction.user} ({interaction.user.id})"
-            )
-            return await message.edit(
-                content=ERRORS['invalid_captcha_code_error'],
-                embed=None,
-                view=None,
-                attachments=[]
-            )
-
-        await interaction.user.add_roles(role)
-
-        embed = create_embed(
-            author_name="verification",
-            fields=[
-                ("user", f"{interaction.user.name} `{interaction.user.id}`", True),
-                ("role added", f"{role.name} `{role.id}`", True)
-            ],
-            timestamp=True
-        )
-        await send_verification_log(interaction, embed)
-
-        cleanup()
-
-        logging_manager.create_log(
-            'INFO', f"Verification completed: {interaction.user} ({interaction.user.id}) successfully verified via captcha"
-        )
-
-        await message.edit(
-            content=DESCRIPTIONS['verification_success'],
-            embed=None,
-            view=None,
-            attachments=[]
         )
