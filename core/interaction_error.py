@@ -1,6 +1,6 @@
 import traceback
 
-from discord import Interaction, NotFound
+from discord import Interaction, NotFound, HTTPException
 from discord.app_commands import TransformerError
 
 from content import ERRORS
@@ -28,9 +28,13 @@ class InteractionErrorHandler:
         msg = f"{msg}\n-# log id: {error_id}"
 
         try:
+            if interaction.is_expired():
+                return
+
             if interaction.response.is_done():
-                await interaction.followup.send(content=msg, ephemeral=True)
+                await interaction.followup.send(msg, ephemeral=True)
             else:
-                await interaction.response.send_message(content=msg, ephemeral=True)
-        except NotFound:
+                await interaction.response.send_message(msg, ephemeral=True)
+
+        except (NotFound, HTTPException):
             pass

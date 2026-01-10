@@ -66,15 +66,16 @@ class Case(commands.Cog):
 
         fields.append(("Reason", case.reason, False))
 
+        embed = create_embed(
+            author_name=f"{case.type} [{case.case_id}]",
+            fields=fields,
+        )
+
         await interaction.edit_original_response(
-            embed=create_embed(
-                author_name=f"{case.type} [{case.case_id}]",
-                fields=fields
-            ),
+            embed=embed, 
             view=CaseView(
-                interaction,
-                interaction.user.id,
-                case.case_id
+                org_user=interaction.user.id,
+                case_id=case.case_id
             )
         )
 
@@ -115,8 +116,7 @@ class Case(commands.Cog):
         manager.delete_case(case_id)
 
         logging_manager.create_log(
-            'INFO',
-            f"Case deleted: Case {case_id} deleted by {interaction.user} ({interaction.user.id})"
+            'INFO', f"Case deleted: Case {case_id} deleted by {interaction.user} ({interaction.user.id})"
         )
 
         await interaction.edit_original_response(
@@ -130,20 +130,19 @@ class Case(commands.Cog):
     )
     @app_commands.describe(member=COMMANDS["case_clear"]["member"])
     async def clear(self, interaction: Interaction, member: Member):
-        if not interaction.response.is_done():
-            await interaction.response.defer(ephemeral=True)
-
         logging_manager = LoggingManager(interaction.guild.id)
 
         if error_key := await check_permissions(interaction, "warn"):
             logging_manager.create_log(
-                'WARNING',
-                f"Permission denied: {interaction.user} ({interaction.user.id}) attempted to clear cases for "
-                f"{member} ({member.id})"
+                "WARNING",
+                f"Permission denied: {interaction.user} ({interaction.user.id}) "
+                f"attempted to clear cases for {member} ({member.id})"
             )
-            return await interaction.edit_original_response(
-                content=ERRORS[error_key]
+            await interaction.response.send_message(
+                content=ERRORS[error_key],
+                ephemeral=True
             )
+            return
 
         await interaction.response.send_modal(
             ConfirmCaseClearModal(member.id)
